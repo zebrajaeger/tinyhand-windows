@@ -76,6 +76,31 @@ Geräusche beim Aufwachen eines Headsets verloren gehen. Beim Ausschalten endet
 die Stille-Wiedergabe und das Audiogerät wird nach den vorgemerkten Clips freigegeben.
 Der Audiotest prüft auch Klicks nach jeweils drei Sekunden Pause.
 
+## GitHub-Releases
+
+Der Workflow `.github/workflows/windows-release.yml` veröffentlicht beim Push
+eines Tags `windows-vMAJOR.MINOR.PATCH` automatisch ein Windows-Release.
+Er führt die Windows-Regressionstests aus, baut die portable x64-Version und
+lädt ein ZIP sowie eine SHA-256-Prüfsumme hoch. Das ZIP enthält keine Debugsymbole.
+Die fertige EXE wird zusätzlich auf ihre eingebetteten Audiodateien geprüft.
+Der hörbare Test `--audio-regression` bleibt ein lokaler Test, da CI-Runner kein
+verlässliches Audiogerät bereitstellen.
+
+Nach Commit und Push der gewünschten Änderungen auf `main` beispielsweise:
+
+```bash
+git tag -a windows-v0.1.0 -m "TinyHand for Windows 0.1.0"
+git push origin windows-v0.1.0
+```
+
+Tags mit einem Zusatz, etwa `windows-v0.1.0-beta.1`, erzeugen ein Pre-Release.
+Die Windows-Tags sind unabhängig von den ursprünglichen macOS-Tags `v*`.
+Im GitHub-Fork muss GitHub Actions aktiviert sein; zusätzliche Secrets sind
+nicht erforderlich. Der Workflow verwendet das automatische `GITHUB_TOKEN`
+und Schreibrechte nur im Veröffentlichungsjob. Bei einem fehlgeschlagenen Lauf
+kann derselbe Workflow erneut gestartet werden; bestehende Release-Assets werden
+ersetzt, manuell bearbeitete Release-Notizen bleiben erhalten.
+
 ## Noch nicht enthalten / Grenzen
 
 - Auto-Updater, Installer, Signierung und Autostart

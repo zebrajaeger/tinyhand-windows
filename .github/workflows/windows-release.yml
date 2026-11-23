@@ -1,0 +1,104 @@
+name: Windows Release
+
+on:
+  push:
+    tags: ['windows-v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Validate version tag
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_NAME -notmatch '^windows-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$') {
+            throw 'Expected windows-vMAJOR.MINOR.PATCH, optionally with a prerelease suffix.'
+          }
+          $version = $env:GITHUB_REF_NAME.Substring('windows-v'.Length)
+          "WINDOWS_VERSION=$version" >> $env:GITHUB_ENV
+      - name: Run Windows regression tests
+        shell: pwsh
+        run: |
+          dotnet run --project windows/TinyHand.Windows.Tests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Windows regression tests failed.' }
+      - name: Publish portable Windows application
+        shell: pwsh
+        run: ./windows/publish.ps1 -Runtime win-x64
+      - name: Package release and checksum
+        shell: pwsh
+        run: |
+          $directory = 'dist/windows/release'
+          New-Item -ItemType Directory -Path $directory -Force | Out-Null
+          $name = "TinyHand-Windows-$env:WINDOWS_VERSION-win-x64.zip"
+          $path = Join-Path $directory $name
+          # Debug symbols are not needed to run the portable application.
+          $files = Get-ChildItem 'dist/windows/win-x64' -File | Where-Object Extension -ne '.pdb'
+          if (-not ($files.Name -contains 'TinyHand.Windows.exe')) { throw 'Portable EXE is missing.' }
+          Compress-Archive -Path $files.FullName -DestinationPath $path -Force
+          $hash = (Get-FileHash $path -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $name" | Set-Content "$path.sha256" -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            dist/windows/release/*.zip
+            dist/windows/release/*.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: release
+      - name: Publish GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#windows-v}"
+          cat > release-notes.md <<'EOF'
+          ## TinyHand for Windows
+
+          Download the **win-x64.zip**, extract it and run **TinyHand.Windows.exe**.
+          Requires Windows 10/11 x64. No separate .NET installation is needed.
+
+          - Ctrl+Alt+H: toggle the pointer overlay.
+          - Left-click and drag: draw; hold Shift when releasing for an arrow.
+          - Esc: clear drawings and turn off the overlay.
+          - Right-click the tray hand icon: choose a hand, size or tap sound.
+
+          The application is unsigned; Windows SmartScreen may show a warning.
+          A SHA-256 checksum is attached alongside the ZIP.
+          EOF
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            # A rerun updates the assets without replacing manually edited notes.
+            gh release upload "$RELEASE_TAG" release/*.zip release/*.sha256 --clobber
+          else
+            options=()
+            if [[ "$version" == *-* ]]; then options+=(--prerelease); fi
+            gh release create "$RELEASE_TAG" release/*.zip release/*.sha256 \
+              --verify-tag --title "TinyHand for Windows $version" \
+              --notes-file release-notes.md "${options[@]}"
+          fi
