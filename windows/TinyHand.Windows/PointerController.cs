@@ -24,6 +24,7 @@ internal sealed class PointerController : IDisposable
     private readonly Settings settings;
     private readonly string settingsPath;
     private readonly TapSound audio = new();
+    private System.Drawing.Icon trayIcon;
     private bool escapeRegistered;
     private bool disposed;
     private bool escapeWasDown;
@@ -31,6 +32,8 @@ internal sealed class PointerController : IDisposable
     internal bool Active { get; private set; }
     internal string Style { get; private set; } = "lavender";
     internal int PointerHeight => settings.PointerHeight;
+    internal string TrayIconStyle => TrayHandIcon.HandStyle(Style);
+    internal System.Drawing.Icon TrayIcon => trayIcon;
     internal Point Cursor { get; private set; }
     internal List<InkStroke> Strokes { get; } = new();
     internal InkStroke? Current { get; private set; }
@@ -96,9 +99,10 @@ internal sealed class PointerController : IDisposable
         menu.Items.Add("Bedienung", null, (_, _) => MessageBox.Show(
             "Strg+Alt+H: Zeiger ein/aus\nZiehen: zeichnen\nUmschalt beim Loslassen: Pfeil\nStrg+Alt+X: Zeichnung löschen\nEsc: löschen und ausschalten\n\nIm Zeigemodus werden Mausklicks abgefangen.\nZum Bedienen anderer Apps den Zeiger ausschalten.\nRechtsklick auf das Tray-Symbol: Menü.", "TinyHand für Windows"));
         menu.Items.Add("Beenden", null, (_, _) => Application.Current.Shutdown());
+        trayIcon = TrayHandIcon.Create(Style);
         tray = new Forms.NotifyIcon
         {
-            Icon = System.Drawing.SystemIcons.Application,
+            Icon = trayIcon,
             Text = "TinyHand — Strg+Alt+H zum Einschalten",
             ContextMenuStrip = menu,
             Visible = true
@@ -131,6 +135,11 @@ internal sealed class PointerController : IDisposable
     internal void SelectStyle(string style)
     {
         if (!AvailableStyles().Contains(style)) return;
+        var nextIcon = TrayHandIcon.Create(style);
+        tray.Icon = nextIcon;
+        var previousIcon = trayIcon;
+        trayIcon = nextIcon;
+        previousIcon.Dispose();
         Style = style;
         settings.Style = style;
         SaveSettings();
@@ -267,6 +276,7 @@ internal sealed class PointerController : IDisposable
         tray.Visible = false;
         tray.ContextMenuStrip?.Dispose();
         tray.Dispose();
+        trayIcon.Dispose();
         audio.Dispose();
     }
 }

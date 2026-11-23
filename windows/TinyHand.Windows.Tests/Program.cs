@@ -64,6 +64,15 @@ internal static class Program
             {
                 var bitmap = new BitmapImage(new Uri($"pack://application:,,,/TinyHand.Windows;component/Hands/hand_{style}.png"));
                 Check(bitmap.PixelWidth > 0 && bitmap.PixelHeight > 0, $"Asset decodes: {style}");
+                var crop = TrayHandIcon.HandBounds(bitmap);
+                Check(crop.Width > 0 && crop.Height > 0 && crop.X >= 0 && crop.Y >= 0 &&
+                    crop.X + crop.Width <= bitmap.PixelWidth && crop.Y + crop.Height <= bitmap.PixelHeight,
+                    $"Tray hand crop fits asset: {style}");
+                using var icon = TrayHandIcon.Create(style);
+                Check(icon.Width == 32 && icon.Height == 32, $"Tray icon renders: {style}");
+                using var iconBitmap = icon.ToBitmap();
+                Check(Enumerable.Range(0, 32).Any(y => Enumerable.Range(0, 32).Any(x => iconBitmap.GetPixel(x, y).A > 128)),
+                    $"Tray icon contains visible hand pixels: {style}");
             }
             string testDirectory = Path.Combine(Path.GetTempPath(), "TinyHand-tests-" + Guid.NewGuid().ToString("N"));
             string settingsPath = Path.Combine(testDirectory, "settings.json");
@@ -108,6 +117,11 @@ internal static class Program
             }
             using (var controller = new PointerController(settingsPath))
             {
+                Check(controller.TrayIconStyle == "lavender", "Initial tray icon matches default hand");
+                var initialIcon = controller.TrayIcon;
+                controller.SelectStyle("coral");
+                Check(controller.TrayIconStyle == "coral" && !ReferenceEquals(initialIcon, controller.TrayIcon),
+                    "Changing hand immediately replaces tray icon");
                 Native.SendMessage(controller.MessageHandle, Native.WmHotkey, new IntPtr(1), IntPtr.Zero);
                 Check(controller.Active && app.Windows.Count > 0, "Overlay windows open");
                 foreach (Window window in app.Windows)
@@ -131,6 +145,7 @@ internal static class Program
                 controller.SetActive(false);
                 Check(app.Windows.Count == 0, "Repeated toggle leaves no windows");
                 controller.SelectStyle("laser");
+                Check(controller.TrayIconStyle == "lavender", "Laser uses a hand app icon rather than a default system icon");
                 controller.SetPointerHeight(480);
                 Check(Settings.Load(settingsPath).Style == "laser" && Settings.Load(settingsPath).PointerHeight == 480, "Tray choices persist");
                 controller.SelectStyle("invalid");
@@ -138,6 +153,10 @@ internal static class Program
             }
             using (var controller = new PointerController(settingsPath))
                 Check(controller.Style == "laser" && controller.PointerHeight == 480 && !controller.Active, "Restart restores preferences, never activates the overlay");
+            restored.Style = "robot";
+            restored.Save(settingsPath);
+            using (var controller = new PointerController(settingsPath))
+                Check(controller.TrayIconStyle == "robot", "Startup tray icon follows saved hand selection");
             File.Delete(settingsPath);
             Directory.Delete(testDirectory);
             app.Shutdown();

@@ -14,6 +14,9 @@ Die EXE ist nicht signiert; Windows kann eine SmartScreen-Warnung anzeigen.
 
 Nach dem Start erscheint TinyHand im Infobereich der Taskleiste, gegebenenfalls
 unter den ausgeblendeten Symbolen. Der Zeiger ist zunächst ausgeschaltet.
+Das Tray-Symbol zeigt die gewählte Hand ohne Stab und aktualisiert sich beim
+Stilwechsel. Im Laser-Modus wird die lavender-Hand als App-Symbol verwendet.
+Die EXE verwendet die Cookie-Hand als festes Anwendungssymbol.
 
 ## Bedienung
 
