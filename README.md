@@ -2,6 +2,8 @@
 
 # TinyHand for Windows
 
+**English** | [Deutsch](README.de.md)
+
 [![Latest Windows release](https://img.shields.io/github/v/release/zebrajaeger/tinyhand-windows?filter=windows-v*&display_name=tag&sort=date)](https://github.com/zebrajaeger/tinyhand-windows/releases)
 [![Platform: Windows 10/11 x64](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D4)](https://github.com/zebrajaeger/tinyhand-windows/releases)
 [![License: MIT](https://img.shields.io/github/license/zebrajaeger/tinyhand-windows)](./LICENSE)
@@ -108,7 +110,7 @@ test requires a working audio device:
 dotnet run --project windows/TinyHand.Windows.Tests -c Release -- --audio-regression
 ```
 
-See the [Windows development guide](windows/README.md) for audio diagnostics,
+See the [Windows development guide](windows/README.en.md) for audio diagnostics,
 optional ARM64 builds and further implementation details. Published releases
 currently provide **x64** builds only.
 
@@ -120,7 +122,7 @@ then publishes a portable ZIP and SHA-256 checksum to this fork's GitHub Release
 Tags with a suffix, such as `windows-v0.2.0-beta.1`, create a pre-release.
 Windows release tags are separate from the original macOS tags (`v*`).
 
-For setup and tagging instructions, see [GitHub releases in the Windows guide](windows/README.md#github-releases).
+For setup and tagging instructions, see [GitHub releases in the Windows guide](windows/README.en.md#github-releases).
 
 ## Credits and license
 

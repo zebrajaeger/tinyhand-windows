@@ -1,4 +1,6 @@
-# TinyHand für Windows (erste Version)
+# TinyHand für Windows – Entwicklungs- und Bedienungshandbuch
+
+**Deutsch** | [English](README.en.md) · [Projektübersicht](../README.de.md)
 
 Native Windows-Portierung mit C#/.NET 10 und WPF. Der macOS-Code bleibt unverändert.
 Die vorhandenen Handgrafiken werden beim Build als Ressourcen eingebettet.
@@ -59,6 +61,8 @@ auf dem konkreten System prüfen.
 ## Bauen und prüfen
 
 Voraussetzung: Windows mit .NET 10 SDK.
+Die Befehle werden im Stammverzeichnis des Repositorys ausgeführt. Vor dem
+Veröffentlichen eine laufende EXE aus dem Ausgabeordner beenden.
 
 ```powershell
 dotnet build windows/TinyHand.Windows -c Release
@@ -72,6 +76,7 @@ dotnet run --project windows/TinyHand.Windows.Tests -c Release -- --audio-regres
 Die Tests benötigen keine externen Testpakete. Sie prüfen Pfeilgeometrie,
 eingebettete Bilder, echte Overlay-Fenster, Rendering und Zustandsbereinigung.
 Dabei werden kurz Overlays auf dem aktuellen Desktop eingeblendet.
+Der optionale Audiotest `--audio-regression` benötigt ein funktionierendes Audiogerät.
 Zusätzlich prüft das Publish-Skript direkt mit der fertigen portablen EXE,
 ob alle sechs eingebetteten WAV-Dateien gefunden und decodiert werden können.
 Audio-Diagnosen stehen unter `%USERPROFILE%/.config/TinyHand/audio.log`.
@@ -110,6 +115,11 @@ nicht erforderlich. Der Workflow verwendet das automatische `GITHUB_TOKEN`
 und Schreibrechte nur im Veröffentlichungsjob. Bei einem fehlgeschlagenen Lauf
 kann derselbe Workflow erneut gestartet werden; bestehende Release-Assets werden
 ersetzt, manuell bearbeitete Release-Notizen bleiben erhalten.
+Falls der Tag-Build nicht gestartet wurde, unter **Actions → Windows Release →
+Run workflow** auf `main` den vorhandenen Windows-Tag im Feld `tag` angeben.
+Der Build verwendet den Quellcode dieses Tags. Vorhandene Tags nicht verschieben;
+für neue Änderungen eine neue Versionsnummer verwenden. Die Veröffentlichung ist
+erst vollständig, wenn ZIP und Prüfsumme tatsächlich im Release vorhanden sind.
 
 ## Noch nicht enthalten / Grenzen
 
