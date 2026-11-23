@@ -3,31 +3,46 @@ name: Windows Release
 on:
   push:
     tags: ['windows-v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing Windows release tag (for example windows-v0.1.0)'
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 permissions:
   contents: read
 
 concurrency:
-  group: windows-release-${{ github.ref_name }}
+  group: windows-release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   build:
     runs-on: windows-latest
     timeout-minutes: 20
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
+      - name: Validate version tag
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^windows-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$') {
+            throw 'Expected windows-vMAJOR.MINOR.PATCH, optionally with a prerelease suffix.'
+          }
+          $version = $env:RELEASE_TAG.Substring('windows-v'.Length)
+          "WINDOWS_VERSION=$version" >> $env:GITHUB_ENV
+          "tag=$env:RELEASE_TAG" >> $env:GITHUB_OUTPUT
       - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ env.RELEASE_TAG }}
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Validate version tag
-        shell: pwsh
-        run: |
-          if ($env:GITHUB_REF_NAME -notmatch '^windows-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$') {
-            throw 'Expected windows-vMAJOR.MINOR.PATCH, optionally with a prerelease suffix.'
-          }
-          $version = $env:GITHUB_REF_NAME.Substring('windows-v'.Length)
-          "WINDOWS_VERSION=$version" >> $env:GITHUB_ENV
       - name: Run Windows regression tests
         shell: pwsh
         run: |
@@ -74,7 +89,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
         run: |
           set -euo pipefail
           version="${RELEASE_TAG#windows-v}"
