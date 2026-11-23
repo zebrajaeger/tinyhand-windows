@@ -10,5 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="../../assets/hand_*.png" Link="Hands/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../../assets/sounds/tap_*.wav" LogicalName="TinyHand.Sounds.%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

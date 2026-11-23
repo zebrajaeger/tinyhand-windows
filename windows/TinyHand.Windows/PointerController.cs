@@ -19,12 +19,18 @@ internal sealed class PointerController : IDisposable
     private readonly List<OverlayWindow> windows = new();
     private readonly Forms.ToolStripMenuItem toggle;
     private readonly Forms.ToolStripMenuItem styles;
+    private readonly Forms.ToolStripMenuItem sizes;
+    private readonly Forms.ToolStripMenuItem sounds;
+    private readonly Settings settings;
+    private readonly string settingsPath;
+    private readonly TapSound audio = new();
     private bool escapeRegistered;
     private bool disposed;
     private bool escapeWasDown;
 
     internal bool Active { get; private set; }
     internal string Style { get; private set; } = "lavender";
+    internal int PointerHeight => settings.PointerHeight;
     internal Point Cursor { get; private set; }
     internal List<InkStroke> Strokes { get; } = new();
     internal InkStroke? Current { get; private set; }
@@ -32,8 +38,12 @@ internal sealed class PointerController : IDisposable
     internal DateTime TapTime { get; private set; }
     internal Point TapPoint { get; private set; }
 
-    internal PointerController()
+    internal PointerController(string? settingsPath = null)
     {
+        this.settingsPath = settingsPath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "TinyHand", "settings.json");
+        settings = Settings.Load(this.settingsPath);
+        Style = settings.Style;
+        AudioLog.Write($"Startup: settings={this.settingsPath}; soundEnabled={settings.SoundEnabled}; sound={settings.Sound}; executable={Environment.ProcessPath}");
         messages = new HwndSource(new HwndSourceParameters("TinyHand hotkeys")
         {
             ParentWindow = new IntPtr(-3), WindowStyle = 0, Width = 0, Height = 0
@@ -52,6 +62,36 @@ internal sealed class PointerController : IDisposable
             styles.DropDownItems.Add(item);
         }
         menu.Items.Add(styles);
+        sizes = new Forms.ToolStripMenuItem("Zeigergröße");
+        foreach (var entry in new[] { ("Klein", 220), ("Mittel", 340), ("Groß", 480) })
+        {
+            var item = new Forms.ToolStripMenuItem(entry.Item1) { Tag = entry.Item2, Checked = settings.PointerHeight == entry.Item2 };
+            item.Click += (_, _) => SetPointerHeight(entry.Item2);
+            sizes.DropDownItems.Add(item);
+        }
+        menu.Items.Add(sizes);
+        var soundToggle = new Forms.ToolStripMenuItem("Tippgeräusch") { Checked = settings.SoundEnabled, CheckOnClick = true };
+        soundToggle.CheckedChanged += (_, _) =>
+        {
+            settings.SoundEnabled = soundToggle.Checked;
+            audio.SetKeepAlive(Active && settings.SoundEnabled);
+            SaveSettings();
+        };
+        menu.Items.Add(soundToggle);
+        sounds = new Forms.ToolStripMenuItem("Geräusch auswählen");
+        foreach (string name in TapSound.Names)
+        {
+            var item = new Forms.ToolStripMenuItem(name) { Checked = settings.Sound == name };
+            item.Click += (_, _) =>
+            {
+                settings.Sound = name;
+                foreach (Forms.ToolStripMenuItem choice in sounds.DropDownItems) choice.Checked = choice.Text == name;
+                SaveSettings();
+                audio.Play(name);
+            };
+            sounds.DropDownItems.Add(item);
+        }
+        menu.Items.Add(sounds);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Bedienung", null, (_, _) => MessageBox.Show(
             "Strg+Alt+H: Zeiger ein/aus\nZiehen: zeichnen\nUmschalt beim Loslassen: Pfeil\nStrg+Alt+X: Zeichnung löschen\nEsc: löschen und ausschalten\n\nIm Zeigemodus werden Mausklicks abgefangen.\nZum Bedienen anderer Apps den Zeiger ausschalten.\nRechtsklick auf das Tray-Symbol: Menü.", "TinyHand für Windows"));
@@ -88,18 +128,36 @@ internal sealed class PointerController : IDisposable
         yield return "laser";
     }
 
-    private void SelectStyle(string style)
+    internal void SelectStyle(string style)
     {
+        if (!AvailableStyles().Contains(style)) return;
         Style = style;
+        settings.Style = style;
+        SaveSettings();
         foreach (Forms.ToolStripMenuItem item in styles.DropDownItems)
             item.Checked = string.Equals(item.Text, style, StringComparison.OrdinalIgnoreCase);
         foreach (var window in windows) window.LoadStyle();
+    }
+
+    internal void SetPointerHeight(int height)
+    {
+        settings.PointerHeight = Math.Clamp(height, 160, 640);
+        foreach (Forms.ToolStripMenuItem item in sizes.DropDownItems) item.Checked = (int)item.Tag! == settings.PointerHeight;
+        SaveSettings();
+        foreach (var window in windows) window.InvalidateVisual();
+    }
+
+    private void SaveSettings()
+    {
+        if (!settings.Save(settingsPath))
+            tray.ShowBalloonTip(4000, "TinyHand", "Einstellungen konnten nicht gespeichert werden. Änderungen gelten nur für diese Sitzung.", Forms.ToolTipIcon.Warning);
     }
 
     internal void SetActive(bool active)
     {
         if (Active == active) return;
         Active = active;
+        audio.SetKeepAlive(active && settings.SoundEnabled);
         if (active)
         {
             Strokes.Clear();
@@ -152,6 +210,8 @@ internal sealed class PointerController : IDisposable
         if (Strokes.Count > 500) Strokes.RemoveAt(0);
         TapPoint = point;
         TapTime = DateTime.UtcNow;
+        AudioLog.Write($"Pointer click: soundEnabled={settings.SoundEnabled}; sound={settings.Sound}");
+        if (settings.SoundEnabled) audio.Play(settings.Sound);
     }
 
     internal void Move(Point point) => Current?.Add(point);
@@ -203,5 +263,6 @@ internal sealed class PointerController : IDisposable
         tray.Visible = false;
         tray.ContextMenuStrip?.Dispose();
         tray.Dispose();
+        audio.Dispose();
     }
 }

@@ -130,7 +130,7 @@ internal sealed class OverlayWindow : Window
         var cursor = PointFromScreen(controller.Cursor);
         if (hand != null)
         {
-            double scale = 340.0 / hand.PixelHeight;
+            double scale = (double)controller.PointerHeight / hand.PixelHeight;
             dc.DrawImage(hand, new Rect(cursor.X - fingertip.X * scale, cursor.Y - fingertip.Y * scale,
                 hand.PixelWidth * scale, hand.PixelHeight * scale));
         }

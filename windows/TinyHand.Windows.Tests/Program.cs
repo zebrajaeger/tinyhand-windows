@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -17,6 +18,8 @@ internal static class Program
     [STAThread]
     private static int Main()
     {
+        if (Array.IndexOf(Environment.GetCommandLineArgs(), "--audio-regression") >= 0)
+            return AudioRegression.Run();
         try
         {
             var stroke = new InkStroke();
@@ -39,7 +42,48 @@ internal static class Program
                 var bitmap = new BitmapImage(new Uri($"pack://application:,,,/TinyHand.Windows;component/Hands/hand_{style}.png"));
                 Check(bitmap.PixelWidth > 0 && bitmap.PixelHeight > 0, $"Asset decodes: {style}");
             }
-            using (var controller = new PointerController())
+            string testDirectory = Path.Combine(Path.GetTempPath(), "TinyHand-tests-" + Guid.NewGuid().ToString("N"));
+            string settingsPath = Path.Combine(testDirectory, "settings.json");
+            var defaults = Settings.Load(settingsPath);
+            Check(defaults.Style == "lavender" && defaults.PointerHeight == 340 && !defaults.SoundEnabled, "Missing settings use defaults");
+            Directory.CreateDirectory(testDirectory);
+            File.WriteAllText(settingsPath, "not json");
+            Check(Settings.Load(settingsPath).PointerHeight == 340, "Corrupt settings recover safely");
+            File.WriteAllText(settingsPath, "{\"Style\":null,\"PointerHeight\":9000,\"Sound\":\"missing\"}");
+            var normalized = Settings.Load(settingsPath);
+            Check(normalized.Style == "lavender" && normalized.PointerHeight == 640 && normalized.Sound == "thock", "Invalid settings are normalized");
+            normalized.Style = "laser";
+            normalized.SoundEnabled = true;
+            normalized.Sound = "pop";
+            Check(normalized.Save(settingsPath), "Settings save atomically");
+            var restored = Settings.Load(settingsPath);
+            Check(restored.Style == "laser" && restored.SoundEnabled && restored.Sound == "pop", "Settings round trip");
+            Check(!File.Exists(settingsPath + ".tmp"), "Atomic save leaves no temporary file");
+            Check(!restored.Save(settingsPath + "/invalid.json"), "Write failures are nonfatal");
+            defaults.Save(settingsPath);
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "--audio-probe") >= 0)
+            {
+                using var audio = new TapSound();
+                audio.Play("quack");
+                System.Threading.Thread.Sleep(1000);
+                audio.Play("quack");
+                System.Threading.Thread.Sleep(1000);
+            }
+            foreach (string sound in TapSound.Names)
+            {
+                using var resource = TapSound.OpenSound(sound);
+                var header = new byte[12];
+                resource.ReadExactly(header);
+                Check(System.Text.Encoding.ASCII.GetString(header, 0, 4) == "RIFF" && System.Text.Encoding.ASCII.GetString(header, 8, 4) == "WAVE", "Embedded WAV is valid: " + sound);
+                using var data = new MemoryStream();
+                resource.Position = 0;
+                resource.CopyTo(data);
+                data.Position = 0;
+                using var player = new System.Media.SoundPlayer(data);
+                player.Load();
+                Check(player.IsLoadCompleted, "Windows audio decoder accepts: " + sound);
+            }
+            using (var controller = new PointerController(settingsPath))
             {
                 Native.SendMessage(controller.MessageHandle, Native.WmHotkey, new IntPtr(1), IntPtr.Zero);
                 Check(controller.Active && app.Windows.Count > 0, "Overlay windows open");
@@ -62,7 +106,16 @@ internal static class Program
                 controller.SetActive(true);
                 controller.SetActive(false);
                 Check(app.Windows.Count == 0, "Repeated toggle leaves no windows");
+                controller.SelectStyle("laser");
+                controller.SetPointerHeight(480);
+                Check(Settings.Load(settingsPath).Style == "laser" && Settings.Load(settingsPath).PointerHeight == 480, "Tray choices persist");
+                controller.SelectStyle("invalid");
+                Check(controller.Style == "laser", "Unknown style cannot corrupt selection");
             }
+            using (var controller = new PointerController(settingsPath))
+                Check(controller.Style == "laser" && controller.PointerHeight == 480 && !controller.Active, "Restart restores preferences, never activates the overlay");
+            File.Delete(settingsPath);
+            Directory.Delete(testDirectory);
             app.Shutdown();
             Console.WriteLine($"PASS: {assertions} assertions (geometry, assets, live overlays, rendering, drawing, cleanup).");
             return 0;
