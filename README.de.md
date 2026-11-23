@@ -127,6 +127,13 @@ ein Pre-Release. Windows-Tags sind unabhängig von den ursprünglichen macOS-Tag
 
 Einrichtung und Tagging sind unter [GitHub-Releases im Windows-Handbuch](windows/README.md#github-releases) beschrieben.
 
+## Ideen aus anderen Forks
+
+Die [Fork-Recherche vom 23. November 2026](research/tinyhand-forks-2026-11-23.md)
+untersucht die Forks des Originalprojekts und stellt mögliche Verbesserungen für
+Windows vor, mit Quellenlinks und Hinweisen zur Umsetzung. Das sind Ideen, keine
+bereits implementierten Funktionen dieses Windows-Ports.
+
 ## Danksagung und Lizenz
 
 Basierend auf [nilbuild/tinyhand](https://github.com/nilbuild/tinyhand), dem ursprünglichen

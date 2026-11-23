@@ -124,6 +124,13 @@ Windows release tags are separate from the original macOS tags (`v*`).
 
 For setup and tagging instructions, see [GitHub releases in the Windows guide](windows/README.en.md#github-releases).
 
+## Ideas from other forks
+
+The [fork research report (German, November 23, 2026)](research/tinyhand-forks-2026-11-23.md)
+surveys the original project's forks and highlights possible Windows improvements,
+with source links and implementation considerations. These are ideas, not features
+already implemented in this Windows port.
+
 ## Credits and license
 
 Based on [nilbuild/tinyhand](https://github.com/nilbuild/tinyhand), the original
