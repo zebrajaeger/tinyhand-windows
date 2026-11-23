@@ -1,4 +1,4 @@
-<img src="./.github/logo.png" width="80" alt="TinyHand-Logo" />
+<img src="./.github/logo-windows.png" width="80" alt="TinyHand-Logo mit Cactus-Hand" />
 
 # TinyHand für Windows
 
