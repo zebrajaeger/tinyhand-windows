@@ -72,8 +72,12 @@ laser or tap animation. Paste into an image-capable application. No file is save
 automatically. Finish or cancel pending text/drawing first. Protected windows,
 secure desktops and some fullscreen content may be blank or unavailable.
 An optional [Stream Deck plugin](stream-deck/README.md) provides seven actions with
-actual state feedback. It is built/installed separately and requires Stream Deck
-7.1+ on Windows. Local package validation is automated; physical hardware acceptance
+actual state feedback. Distributed EXEs embed it and offer installation/update when
+compatible Stream Deck 7.1+ software is found. **Später** pauses offers seven days;
+**Nicht mehr fragen** suppresses future offers, including updates. Manual install
+and reminder controls remain in the tray; confirm Stream Deck's own dialog yourself.
+App-only developer builds without the bundle have no in-app installer.
+Local package validation is automated; physical hardware acceptance
 is still pending. The app remains usable without the plugin.
 
 ## Features

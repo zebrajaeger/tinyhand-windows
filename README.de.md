@@ -74,8 +74,12 @@ Danach in ein bildfähiges Programm einfügen. Es wird keine Datei automatisch
 gespeichert. Ausstehende Zeichnungen/Texte zuvor bestätigen oder abbrechen.
 Geschützte Fenster, sichere Desktops und manche Vollbildinhalte können leer oder
 nicht aufnehmbar sein. Das optionale [Stream-Deck-Plugin](stream-deck/README.de.md)
-bietet sieben Aktionen mit echter Zustandsrückmeldung, wird separat gebaut/installiert
-und benötigt Stream Deck 7.1+ unter Windows. Paketprüfung ist automatisiert;
+bietet sieben Aktionen mit echter Zustandsrückmeldung und benötigt Stream Deck 7.1+.
+Veröffentlichte EXEs enthalten das Paket und bieten Installation/Update bei erkannter
+Software an. **Später** pausiert sieben Tage, **Nicht mehr fragen** unterdrückt auch
+spätere Updates. Manuelle Installation und Angebotssteuerung bleiben im Tray;
+Stream Decks eigenen Dialog bestätigst du selbst. App-only-Entwicklungsbuilds ohne
+Paket haben keinen integrierten Installer. Paketprüfung ist automatisiert;
 Hardwareabnahme steht noch aus. TinyHand bleibt ohne Plugin nutzbar.
 
 ## Funktionen

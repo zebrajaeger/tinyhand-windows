@@ -43,6 +43,7 @@ internal sealed class PointerController : IDisposable
     internal event Action? StateChanged;
     private readonly MonitorCapture capture;
     private readonly CancellationTokenSource lifetime = new();
+    private PluginInstallationCoordinator? pluginInstallation;
     private bool acquiring;
     internal ControllerState State => new(Active, PointerHeight, settings.SoundEnabled, SelectedColor, TextPhase, document.Items.Count, capture.Pending);
 
@@ -220,6 +221,99 @@ internal sealed class PointerController : IDisposable
 
     internal bool PersistenceWarning { get; private set; }
     internal void ResetPersistenceWarning() => PersistenceWarning = false;
+
+    internal Task PluginStartup { get; private set; } = Task.CompletedTask;
+    internal Forms.ContextMenuStrip TrayMenu => tray.ContextMenuStrip!;
+    private bool pluginOfferVisible;
+    private PluginInstallOfferWindow? pluginOfferWindow;
+
+    internal void StartPluginInstallation(PluginInstallationCoordinator? coordinator = null, Func<bool, string>? chooseOffer = null,
+        Action<string>? showStatus = null)
+    {
+        if (pluginInstallation != null) return;
+        EmbeddedPluginPackage? package;
+        try { package = coordinator != null ? coordinator.Package : EmbeddedPluginPackage.Load(); }
+        catch (Exception e) when (e is IOException or InvalidDataException or System.Text.Json.JsonException or InvalidOperationException or System.Collections.Generic.KeyNotFoundException or FormatException)
+        {
+            tray.ContextMenuStrip!.Items.Add("Stream-Deck-Plugin: Paket ungültig", null, (_, _) =>
+                MessageBox.Show("Das eingebettete Plugin konnte nicht geprüft werden.", "TinyHand"));
+            return;
+        }
+        pluginInstallation = coordinator ?? new PluginInstallationCoordinator(package,
+            new StreamDeckDetector(new WindowsStreamDeckDiscovery()),
+            new PluginOfferRepository(Path.Combine(Path.GetDirectoryName(settingsPath)!, "stream-deck-installation.json")),
+            new StreamDeckInstallerLauncher(), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TinyHand", "StreamDeckPlugin"));
+        var item = new Forms.ToolStripMenuItem("Stream-Deck-Plugin …");
+        item.Click += async (_, _) =>
+        {
+            await pluginInstallation.RefreshAsync();
+            if (disposed || pluginOfferVisible) return;
+            if (pluginInstallation.Observation.Status is PluginInstallStatus.Missing or PluginInstallStatus.Older && package != null)
+            {
+                string choice = AskOffer();
+                if (disposed) return;
+                pluginInstallation.Choose(choice);
+                if (choice == "install")
+                {
+                    await pluginInstallation.InstallAsync();
+                    if (!disposed) Status(pluginInstallation.Message ?? "Installationsstatus nicht verfügbar.");
+                }
+            }
+            else Status(pluginInstallation.Message ?? "Stream-Deck-Plugin ist bereits aktuell.");
+        };
+        var automatic = new Forms.ToolStripMenuItem("Stream-Deck-Angebote beim Start") { Checked = pluginInstallation.Offers.AutomaticOffersEnabled };
+        automatic.Click += (_, _) => pluginInstallation.EnableOffers(!pluginInstallation.Offers.AutomaticOffersEnabled);
+        pluginInstallation.Changed += () =>
+        {
+            if (disposed) return;
+            automatic.Checked = pluginInstallation.Offers.AutomaticOffersEnabled;
+            item.Enabled = !pluginInstallation.Pending;
+            item.Text = pluginInstallation.Pending ? "Stream-Deck-Installation läuft …" : pluginInstallation.Observation.Status switch
+            {
+                PluginInstallStatus.Missing when package != null => "Stream-Deck-Plugin installieren …",
+                PluginInstallStatus.Older => "Stream-Deck-Plugin aktualisieren …",
+                PluginInstallStatus.Current or PluginInstallStatus.Newer => "Stream-Deck-Plugin: bereits aktuell",
+                _ => "Stream-Deck-Plugin: Status prüfen …"
+            };
+            if (pluginInstallation.Message != null && !pluginInstallation.Pending)
+                item.ToolTipText = pluginInstallation.Message;
+        };
+        tray.ContextMenuStrip!.Items.Add(item);
+        tray.ContextMenuStrip.Items.Add(automatic);
+        PluginStartup = Application.Current.Dispatcher.InvokeAsync(async () =>
+        {
+            await pluginInstallation.RefreshAsync();
+            if (disposed || Active || TextPhase != "idle" || !pluginInstallation.ShouldOffer) return;
+            if (pluginOfferVisible) return;
+            string choice = AskOffer();
+            if (disposed) return;
+            pluginInstallation.Choose(choice);
+            if (choice == "install")
+            {
+                await pluginInstallation.InstallAsync();
+                if (!disposed) tray.ShowBalloonTip(4000, "TinyHand", pluginInstallation.Message ?? "Installationsstatus nicht verfügbar.", Forms.ToolTipIcon.Info);
+            }
+        }).Task.Unwrap();
+
+        string AskOffer()
+        {
+            pluginOfferVisible = true;
+            try
+            {
+                bool update = pluginInstallation.Observation.Status == PluginInstallStatus.Older;
+                if (chooseOffer != null) return chooseOffer(update);
+                pluginOfferWindow = new PluginInstallOfferWindow(update);
+                pluginOfferWindow.ShowDialog();
+                return pluginOfferWindow.Choice;
+            }
+            finally { pluginOfferVisible = false; pluginOfferWindow = null; }
+        }
+        void Status(string message)
+        {
+            if (showStatus != null) showStatus(message);
+            else MessageBox.Show(message, "TinyHand");
+        }
+    }
 
     internal void SetActive(bool active)
     {
@@ -468,6 +562,8 @@ internal sealed class PointerController : IDisposable
         if (disposed) return;
         disposed = true;
         lifetime.Cancel();
+        pluginInstallation?.Dispose();
+        pluginOfferWindow?.Close();
         acquiring = false;
         deferredCaptureCommands.Clear();
         SystemEvents.DisplaySettingsChanged -= DisplayChanged;

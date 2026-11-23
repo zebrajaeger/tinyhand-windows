@@ -13,4 +13,11 @@
     <Resource Include="../../assets/hand_*.png" Link="Hands/%(Filename)%(Extension)" />
     <EmbeddedResource Include="../../assets/sounds/tap_*.wav" LogicalName="TinyHand.Sounds.%(Filename)%(Extension)" />
   </ItemGroup>
+  <ItemGroup Condition="'$(StreamDeckPackagePath)' != '' and '$(StreamDeckMetadataPath)' != ''">
+    <EmbeddedResource Include="$(StreamDeckPackagePath)" LogicalName="TinyHand.StreamDeck.Package" />
+    <EmbeddedResource Include="$(StreamDeckMetadataPath)" LogicalName="TinyHand.StreamDeck.Metadata" />
+  </ItemGroup>
+  <Target Name="RequireStreamDeckPackage" BeforeTargets="PrepareForBuild" Condition="'$(RequireStreamDeckPackage)' == 'true'">
+    <Error Condition="'$(StreamDeckPackagePath)' == '' or !Exists('$(StreamDeckPackagePath)') or '$(StreamDeckMetadataPath)' == '' or !Exists('$(StreamDeckMetadataPath)')" Text="A verified Stream Deck package and metadata are required for distribution." />
+  </Target>
 </Project>

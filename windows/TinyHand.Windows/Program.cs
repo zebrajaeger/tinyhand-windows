@@ -9,6 +9,11 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (Array.IndexOf(args, "--check-stream-deck-plugin-resources") >= 0)
+        {
+            try { return EmbeddedPluginPackage.Load() != null ? 0 : 1; }
+            catch (Exception) { return 1; }
+        }
         if (Array.IndexOf(args, "--check-audio-resources") >= 0)
         {
             try
@@ -32,6 +37,7 @@ internal static class Program
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         using var controller = new PointerController();
         using var control = new LocalControlHost(controller, app.Dispatcher);
+        controller.StartPluginInstallation();
         app.Run();
         return 0;
     }

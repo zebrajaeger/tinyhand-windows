@@ -9,6 +9,33 @@ Keine Drehregler, Gedrückthalten-Funktion, automatischer App-Start oder Marketp
 
 ## Bauen und installieren
 
+Veröffentlichte TinyHand-EXEs enthalten das passende Plugin. Wird kompatible
+Stream-Deck-Software gefunden (auch geschlossen und ohne Gerät), bietet TinyHand
+bei fehlendem oder älterem Plugin Installation/Update an. **Später** pausiert alle
+Angebote sieben Tage; **Nicht mehr fragen** unterdrückt auch spätere Updates.
+Im Tray bleiben **Stream-Deck-Plugin …** und **Stream-Deck-Angebote beim Start**
+verfügbar. Wiederaktivieren gilt für den nächsten Start. Neuere installierte Plugins
+werden nicht heruntergestuft. Unklare/zu alte Installationen führen zu keinem Popup.
+
+TinyHand öffnet nach Zustimmung das eingebettete Paket in Stream Deck; dessen
+Bestätigungsdialog bleibt deine Entscheidung. Öffnen bedeutet noch nicht Erfolg:
+TinyHand prüft bis zu 60 Sekunden die installierte Version. Kein Download, keine
+Profiländerung, kein automatischer Zeigerstart. Das geprüfte Paket liegt unter
+`%LOCALAPPDATA%\TinyHand\StreamDeckPlugin\<Version>\`. Eine allein verschobene EXE
+funktioniert weiterhin. Unregistrierte portable Stream-Deck-Kopien werden nicht
+durch eine allgemeine Festplattensuche erkannt.
+
+Installationsstatus und Laufzeitverbindung sind getrennt: Ein passendes installiertes
+Manifest beweist weder ein angeschlossenes Gerät noch eine aktuelle Verbindung zu
+TinyHand. Nach Abbruch oder Zeitablauf kannst du über **Stream-Deck-Plugin …** den
+Status aktualisieren und manuell erneut versuchen; TinyHand wiederholt die Übergabe
+nicht automatisch.
+
+Die Datei `plugin-version.json` ist die maßgebliche Plugin-Version. Paketierung
+erzeugt Paket und SHA-256-/Versionsmetadaten zum Einbetten. App-only-Entwicklungsbuilds
+ohne diese Ressourcen erklären, dass die Installation nicht verfügbar ist; sie
+verwenden keine zufällige alte Paketdatei und laden nichts nach.
+
 Entwicklung benötigt Node.js **24+**, npm und Windows. In diesem Verzeichnis:
 
 ```powershell

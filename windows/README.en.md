@@ -77,14 +77,26 @@ pending text/strokes or another capture. Capture/clipboard errors restore overla
 and do not report success. Clipboard retries are bounded, as is the five-second
 capture operation. Secure/protected/exclusive-fullscreen content can be blank;
 successful clipboard delivery does not prove protected pixels were captured.
-The optional [Stream Deck plugin](../stream-deck/README.md) is a separate build and
-local install for Stream Deck 7.1+. It uses a bounded current-user/current-session
+The optional [Stream Deck plugin](../stream-deck/README.md) supports Stream Deck 7.1+.
+Distributed EXEs embed the matching package and offer consented installation/update.
+Später defers seven days; Nicht mehr fragen suppresses all future offers. Manual tray
+access remains. TinyHand never clicks Stream Deck's confirmation dialog or downgrades
+a newer plugin; observed installed version, not launch alone, determines success.
+It uses a bounded current-user/current-session
 named pipe with protocol v1. The app starts the bridge only during normal operation,
 not resource validation. No network listener or automatic app launch is involved.
 Plugin tooling does not participate in the portable app build. Real hardware and
 cross-user/session acceptance must be recorded separately from automated tests.
 
 ## Build and test
+
+Default `windows/publish.ps1` now needs Node 24/npm to package and embed the plugin.
+`dotnet build` stays app-only without Node; `windows/publish.ps1 -AppOnly` is an
+explicit developer publish without installation resources. Use `-OutputDirectory`
+for isolated output rather than overwriting a running EXE. Plugin version comes
+from `stream-deck/plugin-version.json`. Published checks include both
+`--check-audio-resources` and `--check-stream-deck-plugin-resources`; neither mode
+opens a tray or installer or touches reminder state.
 
 Requires Windows with the .NET 10 SDK. Run commands from the repository root.
 Before publishing, close any EXE running from the output directory.

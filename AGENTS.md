@@ -71,6 +71,19 @@ Keep acquisition mutations deferred and cancel pending capture on application ex
 current-user access and client-session checks. Normal `Program.Main` owns its lifetime;
 resource-validation mode never opens it. No TCP listener or automatic app launch.
 `stream-deck/` is optional pinned Node/TypeScript tooling, independent of .NET publish.
+Normal `dotnet build` remains app-only. Default `windows/publish.ps1` now packages
+and embeds the plugin and requires Node 24/npm; `-AppOnly` is explicitly a developer
+publish with no in-app installer. `stream-deck/plugin-version.json` owns the plugin
+version. Package bytes plus hash/version metadata are passed explicitly to MSBuild;
+never silently embed an old package from an output folder. Published checks include
+`--check-stream-deck-plugin-resources`, isolated before tray, detection and dialogs.
+`PluginInstallation.cs`, `StreamDeckDetection.cs`, `EmbeddedPluginPackage.cs` and
+`PluginInstaller.cs` isolate policy, discovery, verified extraction and handoff.
+Reminder state is separate atomic `stream-deck-installation.json`: Später defers
+all offers seven days; Nicht mehr fragen suppresses installation and future updates.
+Corrupt state fails quiet. The shipped app never confirms Elgato's dialog; only the
+maintainer's separately authorized desktop-agent workflow may do that. Never downgrade
+newer plugins or modify user profiles; installer launch is not installation success.
 It includes a scoped patched-Zod override; retain its SDK compatibility/audit checks.
 Never replay an unacknowledged toggle after disconnect. Physical device acceptance,
 cross-user/session isolation and real headset listening are separate manual checks.

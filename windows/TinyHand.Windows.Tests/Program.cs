@@ -23,6 +23,7 @@ internal static class Program
         try
         {
             AnnotationRegression.Run(Check);
+            PluginInstallationRegression.Run(Check);
             string startupKey = @"Software\TinyHand.Tests\" + Guid.NewGuid().ToString("N");
             string startupPath = Path.Combine(Path.GetTempPath(), "TinyHand test folder", "TinyHand.Windows.exe");
             try
@@ -83,6 +84,7 @@ internal static class Program
             dot.Add(new Point());
             Check(dot.Arrowhead(20) == null, "Single-point taps have no arrow");
             var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            EmbeddedPluginRegression.Run(Check);
             AnnotationInputRegression.Run(Check);
             CaptureRegression.Run(Check);
             ControlRegression.Run(Check);

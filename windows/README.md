@@ -82,13 +82,25 @@ wieder her und werden nicht als Erfolg gemeldet. Clipboard-Wiederholungen sind
 begrenzt; das Aufnahmelimit beträgt fünf Sekunden. Sichere/geschützte Desktops und
 exklusive Vollbildinhalte können leer bleiben; Clipboard-Erfolg beweist keine
 Aufnahme geschützter Pixel. Das optionale [Stream-Deck-Plugin](../stream-deck/README.de.md)
-wird separat für Stream Deck 7.1+ gebaut und lokal installiert. Protokoll v1 nutzt
+unterstützt Stream Deck 7.1+. Veröffentlichte EXEs enthalten das passende Paket und
+bieten Installation/Update mit Zustimmung an. Später pausiert sieben Tage; Nicht
+mehr fragen unterdrückt alle Angebote. Manuelle Tray-Steuerung bleibt verfügbar.
+TinyHand klickt nicht auf Elgatos Bestätigung und führt keine Downgrades aus;
+Erfolg setzt eine beobachtete installierte Version voraus. Protokoll v1 nutzt
 eine begrenzte Named-Pipe für denselben Benutzer/dieselbe Windows-Sitzung, nur bei
 normalem App-Start, nicht bei Ressourcenprüfung. Kein Netzwerklistener oder
 automatischer App-Start. Plugin-Werkzeuge sind keine portable Build-Abhängigkeit.
 Hardware-/Fremdbenutzer-/Sitzungsabnahme getrennt von automatischen Tests festhalten.
 
 ## Bauen und prüfen
+
+`windows/publish.ps1` benötigt jetzt Node 24/npm für Paketierung und Einbettung.
+`dotnet build` bleibt App-only ohne Node; `windows/publish.ps1 -AppOnly` erzeugt
+explizit eine Entwicklerausgabe ohne Installationsressourcen. `-OutputDirectory`
+ermöglicht isolierte Ausgabe statt Überschreiben laufender EXEs. Die Plugin-Version
+steht in `stream-deck/plugin-version.json`. Publish prüft
+`--check-audio-resources` und `--check-stream-deck-plugin-resources`; beide Modi
+öffnen weder Tray noch Installer und verändern keinen Erinnerungszustand.
 
 Voraussetzung: Windows mit .NET 10 SDK.
 Die Befehle werden im Stammverzeichnis des Repositorys ausgeführt. Vor dem

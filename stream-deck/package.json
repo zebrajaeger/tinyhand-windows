@@ -9,7 +9,7 @@
     "build": "tsc && node scripts/build.mjs",
     "test": "npm run build && node --test build/tests/*.test.js",
     "validate": "streamdeck validate out/io.github.zebrajaeger.tinyhand.sdPlugin",
-    "package": "npm run build && npm run validate && streamdeck pack out/io.github.zebrajaeger.tinyhand.sdPlugin --output out --force"
+    "package": "npm run build && npm run validate && streamdeck pack out/io.github.zebrajaeger.tinyhand.sdPlugin --output out --force && node scripts/package-metadata.mjs"
   },
   "dependencies": { "@elgato/streamdeck": "3.0.6" },
   "overrides": { "@elgato/utils": { "zod": "4.6.7" } },

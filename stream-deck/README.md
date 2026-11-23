@@ -9,6 +9,31 @@ No dial, hold-to-point, automatic app launching or Marketplace submission is inc
 
 ## Build and install
 
+Distributed TinyHand EXEs embed the matching plugin. Compatible installed Stream
+Deck software is detected even while closed or without a device. A missing/older
+plugin gets an install/update offer. **Später** defers all offers for seven days;
+**Nicht mehr fragen** also suppresses future updates. **Stream-Deck-Plugin …** and
+**Stream-Deck-Angebote beim Start** remain in the tray. Re-enabling takes effect
+at the next startup. Newer installed plugins are never downgraded; ambiguous or
+unsupported installations get no automatic popup.
+
+After consent TinyHand opens its embedded package in Stream Deck, leaving that
+software's confirmation dialog to you. Handoff is not success: installed version
+is observed for up to 60 seconds. No download, profile changes or pointer activation
+occur. Verified bytes are extracted under
+`%LOCALAPPDATA%\TinyHand\StreamDeckPlugin\<version>\`; moving the EXE alone still
+works. Unregistered portable Stream Deck copies are not discovered by disk-wide scans.
+
+Installation status is separate from runtime connectivity: a matching installed
+manifest does not prove that a device is connected or that the plugin can currently
+reach TinyHand. If confirmation is canceled or times out, use **Stream-Deck-Plugin …**
+to refresh status and retry manually; TinyHand does not replay the handoff.
+
+`plugin-version.json` is the authoritative plugin version. Packaging produces the
+package and SHA-256/version metadata for embedding. App-only development builds
+explain missing installation resources rather than use stale local packages or
+download anything.
+
 Developers need Node.js **24+**, npm and Windows. From this directory:
 
 ```powershell

@@ -43,6 +43,23 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: stream-deck/package-lock.json
+      - name: Verify Stream Deck plugin
+        shell: pwsh
+        working-directory: stream-deck
+        run: |
+          npm ci --ignore-scripts
+          if ($LASTEXITCODE -ne 0) { throw 'Plugin dependencies failed.' }
+          npm run typecheck
+          if ($LASTEXITCODE -ne 0) { throw 'Plugin typecheck failed.' }
+          npm test
+          if ($LASTEXITCODE -ne 0) { throw 'Plugin tests failed.' }
+          npm audit
+          if ($LASTEXITCODE -ne 0) { throw 'Plugin dependency audit failed.' }
       - name: Run Windows regression tests
         shell: pwsh
         run: |
@@ -101,7 +118,13 @@ jobs:
 
           - Ctrl+Alt+H: toggle the pointer overlay.
           - Left-click and drag: draw; hold Shift when releasing for an arrow.
-          - Esc: clear drawings and turn off the overlay.
+          - Esc: turn off the overlay without deleting completed annotations.
+          - Ctrl+Alt+X: clear all lines and text annotations.
+          - Optional Stream Deck plugin is embedded in the EXE. If compatible Stream
+            Deck software is found, TinyHand offers installation or an update.
+            Choose Installieren, Später (seven days), or Nicht mehr fragen; manual
+            installation and reminder settings remain in the tray. Confirm the
+            separate Stream Deck installer dialog yourself.
           - Right-click the tray hand icon: choose a hand, size or tap sound.
           - Optional **Mit Windows starten** in the tray menu: launch at sign-in for
             the current user. The pointer starts off. Keep the EXE in a permanent

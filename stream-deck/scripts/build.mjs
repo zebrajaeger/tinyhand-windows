@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { iconSvg, brandedIcon } from "../build/src/icons.js";
 const root = new URL("../out/io.github.zebrajaeger.tinyhand.sdPlugin/", import.meta.url);
+const version = JSON.parse(await readFile(new URL("../plugin-version.json", import.meta.url), "utf8"));
 await mkdir(new URL("bin/", root), { recursive: true });
 await cp(new URL("../assets/", import.meta.url), root, { recursive: true });
 await rm(new URL("icon.svg", root), { force: true });
@@ -26,8 +27,8 @@ for (const id of Object.keys(names)) {
   await writeFile(new URL(`keys/${id}-selected.svg`, root), brandedIcon(id, brandImage, true));
 }
 const manifest = { $schema: "https://schemas.elgato.com/streamdeck/plugins/manifest.json", UUID: "io.github.zebrajaeger.tinyhand",
-  Name: "TinyHand für Windows", Author: "zebrajaeger", Description: "TinyHand-Zeiger und Anmerkungen steuern.", Version: "0.1.0.5",
-  CodePath: "bin/plugin.js", Nodejs: { Version: "24" }, SDKVersion: 2, Software: { MinimumVersion: "7.1" },
+  Name: "TinyHand für Windows", Author: "zebrajaeger", Description: "TinyHand-Zeiger und Anmerkungen steuern.", Version: version.version,
+  CodePath: "bin/plugin.js", Nodejs: { Version: "24" }, SDKVersion: 2, Software: { MinimumVersion: version.minimumSoftware },
   OS: [{ Platform: "windows", MinimumVersion: "10" }], Icon: "icon", CategoryIcon: "icon", Category: "TinyHand für Windows",
   URL: "https://github.com/zebrajaeger/tinyhand-windows", PropertyInspectorPath: "inspector.html",
   Actions: Object.entries(names).map(([id, name]) => ({ UUID: `io.github.zebrajaeger.tinyhand.${id}`, Name: name, Icon: `keys/${id}`,
