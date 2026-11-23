@@ -126,7 +126,7 @@ For setup and tagging instructions, see [GitHub releases in the Windows guide](w
 
 ## Ideas from other forks
 
-The [fork research report (German, November 23, 2026)](research/tinyhand-forks-2026-11-23.md)
+The [fork research report of November 23, 2026](research/tinyhand-forks-2026-11-23.en.md)
 surveys the original project's forks and highlights possible Windows improvements,
 with source links and implementation considerations. These are ideas, not features
 already implemented in this Windows port.

@@ -1,5 +1,7 @@
 # TinyHand-Forks: Ideen für die Windows-Version
 
+**Deutsch** | [English](tinyhand-forks-2026-11-23.en.md)
+
 Stand: **23. November 2026**. Untersucht wurde das Fork-Netzwerk von
 [nilbuild/tinyhand](https://github.com/nilbuild/tinyhand) mit Blick auf
 [zebrajaeger/tinyhand-windows](https://github.com/zebrajaeger/tinyhand-windows).
@@ -346,11 +348,11 @@ ist ausdrücklich kein Qualitätsurteil über das komplette Programm.
 | [AbdulRehman56](https://github.com/AbdulRehman56/tinyhand/tree/linux-port) | Rust/X11 und GNOME-Erweiterung; Point/Draw, Gallery/Favoriten, Undo, Spotlight, Profile; Toolkit teils als experimentell eingeordnet. |
 | [alcibiadesc](https://github.com/alcibiadesc/tinyhand/branches) | `quiet-strokes`, `shift-tap-mouse-mode`, `hide-toolbar-option`: Ton nur bei Tap, einfacher Shift-Moduswechsel, Toolbar verstecken. Nicht nur `main` anschauen. |
 | [Arisaya1](https://github.com/Arisaya1/tinyhand/tree/windows-port) | Nativer C++-Windows-Port und ShapeKit; CI/MinGW. |
-| [austinpresley/please-look-here](https://github.com/austinpresley/please-look-here) | Größerer eigenständiger Umbau; ergänzende Untersuchung unten. |
+| [austinpresley/please-look-here](https://github.com/austinpresley/please-look-here) | Größerer eigenständiger Umbau; ausführliche Untersuchung oben. |
 | [Ayas4y](https://github.com/Ayas4y/tinyhand) | Umfangreicher Rust-Neubau für macOS/Windows, separate Settings-App und Update-Feed. Vieles portiert bestehendes Upstream-Verhalten. |
 | [CatalystMonish](https://github.com/CatalystMonish/tinyhand/tree/windows-port-and-shape-snapping) | C++-Windows-Port und geometrische Formerkennung mit Tests. |
 | [charlesanim](https://github.com/charlesanim/tinyhand) | Native Pointer-Interaktion und Zeichnungs-/Screenshot-Capture. |
-| [esreverse/quitehandy](https://github.com/esreverse/quitehandy) | Größerer eigenständiger Umbau; ergänzende Untersuchung unten. |
+| [esreverse/quitehandy](https://github.com/esreverse/quitehandy) | Größerer eigenständiger Umbau; ausführliche Untersuchung oben. |
 | [Felitendo/waypointer](https://github.com/Felitendo/waypointer) | Rust/Wayland-Neubau; Farben pro Pointer, Klickring, Glow, mehrsprachige UI, sortierbare Toolbar, Linux-Pakete. |
 | [gitrandynow](https://github.com/gitrandynow/tinyhand/tree/remove-sparkle) | Entfernt Sparkle/Auto-Updater. Für Windows derzeit keine neue Funktion: dort gibt es noch keinen Updater. |
 | [guidomariadifiore](https://github.com/guidomariadifiore/tinyhand-windows) | Nativer Windows-Port, Alt-Interaktion sowie Sound-/Render-/Compilerkorrekturen. |
@@ -361,10 +363,10 @@ ist ausdrücklich kein Qualitätsurteil über das komplette Programm.
 | [maxnetdigital](https://github.com/maxnetdigital/tinyhand) | Snapshot, Bildschirmaufnahme und zusätzlicher Zugang zu Settings. |
 | [MUL7ii](https://github.com/MUL7ii/tinyhand/tree/windows-port) | Umfangreicher Rust-Windows-Port: Toolbar, WebView2-Settings, WASAPI, DPI/Monitore, Click-/Drag-Hybrid, Capture-Tool-Ausnahmen, Rendering-/Hook-Korrekturen. Gute Windows-Referenz, aber andere Architektur. |
 | [n0stalgia-mac](https://github.com/n0stalgia-mac/tinyhand/tree/classic-mac) | Classic-Mac/System-7.1-Port; offscreen Rendering und Draw-Schalter. Kurios, kaum direkte Windows-Mehrwerte. |
-| [omiusgm/playpointer](https://github.com/omiusgm/playpointer) | Größerer eigenständiger Umbau; ergänzende Untersuchung unten. |
+| [omiusgm/playpointer](https://github.com/omiusgm/playpointer) | Größerer eigenständiger Umbau; ausführliche Untersuchung oben. |
 | [p4block](https://github.com/p4block/tinyhand) | Python-Wayland-Port/Arch-Packaging, sechs Sound-Previews und eigene Sounddatei. |
 | [pietro-santoro](https://github.com/pietro-santoro/tinyhand/tree/windows-port) | Nativer Windows-Port, CI/Selftests, Transform-/Hook-Priority-Korrekturen. |
-| [rjiang-bb/aihand](https://github.com/rjiang-bb/aihand) | Größerer eigenständiger Umbau; ergänzende Untersuchung unten. |
+| [rjiang-bb/aihand](https://github.com/rjiang-bb/aihand) | Größerer eigenständiger Umbau; ausführliche Untersuchung oben. |
 | [sajeeldigitali](https://github.com/sajeeldigitali/tinyhand/tree/windows) | Windows-11-Port mit CI/Selftest; wählbare Taste für echte Klicks, dokumentierte Fenster-/Input-Grenzen. |
 | [sergvax](https://github.com/sergvax/tinyhand) | Click-through und separat schaltbares Zeichnen. |
 | [sud868](https://github.com/sud868/tinyhand/tree/feat/gnome-extension) | GNOME-Shell-Erweiterung statt macOS-App. |
