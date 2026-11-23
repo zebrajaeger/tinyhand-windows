@@ -198,7 +198,11 @@ internal sealed class PointerController : IDisposable
         if (escape && !escapeWasDown) { SetActive(false); return; }
         escapeWasDown = escape;
         if (Native.GetCursorPos(out var p)) Cursor = new Point(p.X, p.Y);
-        foreach (var window in windows) window.InvalidateVisual();
+        foreach (var window in windows)
+        {
+            window.UpdatePose();
+            window.InvalidateVisual();
+        }
     }
 
     internal void Begin(Point point)

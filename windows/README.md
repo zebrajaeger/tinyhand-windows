@@ -78,7 +78,9 @@ Der Audiotest prüft auch Klicks nach jeweils drei Sekunden Pause.
 - Auto-Updater, Installer, Signierung und Autostart
 - Schwebende Werkzeugleiste und umfassendes Einstellungsfenster
 - URL-Automatisierung, eigene Handgrafiken und Durchklickmodus
-- Dynamische Arm-/Stabbewegung: vorerst folgt eine feste Handgrafik dem Mauszeiger.
+- Die Hand neigt sich dynamisch mit sanft nachgeführtem Griffpunkt; die Fingerspitze
+  bleibt am Cursor. Eine separate Verlängerung des Arm-/Stabsegments wie unter macOS
+  ist noch nicht enthalten.
 
 Kein Overlay über dem sicheren Windows-Desktop (UAC/Anmeldung); exklusives Vollbild
 und manche geschützten Anwendungen können das Overlay verdecken.

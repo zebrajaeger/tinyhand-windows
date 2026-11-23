@@ -22,6 +22,29 @@ internal static class Program
             return AudioRegression.Run();
         try
         {
+            var pose = new HandPose();
+            var tip = new Point(180, 12);
+            var cursor = new Point(500, 400);
+            pose.Update(cursor, 1920, 1080);
+            Check(pose.Angle < 0 && pose.Angle > -90, "Hand leans toward a grip below and right of the cursor");
+            foreach (double scale in new[] { 0.15, 0.5, 1.0 })
+                Check((pose.Transform(cursor, tip, scale).Transform(tip) - cursor).Length < 0.000001,
+                    "Rotated fingertip stays anchored at every pointer size");
+            var moved = new Point(1800, 400);
+            pose.Update(moved, 1920, 1080);
+            var fresh = new HandPose();
+            fresh.Update(moved, 1920, 1080);
+            Check(pose.Angle > fresh.Angle, "Grip lags a fast rightward movement");
+            for (int i = 0; i < 200; i++) pose.Update(moved, 1920, 1080);
+            Check(Math.Abs(pose.Angle - fresh.Angle) < 0.001, "Grip settles toward the new cursor position");
+            pose.Update(new Point(1900, 1079), 1920, 1080);
+            Check(double.IsFinite(pose.Angle), "Hand angle remains finite at screen edges");
+            pose.Update(new Point(-200, -100), 1920, 1080);
+            Check((pose.Transform(new Point(-200, -100), tip, 0.5).Transform(tip) - new Point(-200, -100)).Length < 0.000001,
+                "Fingertip anchoring supports off-screen coordinates");
+            double previousAngle = pose.Angle;
+            pose.Update(cursor, 0, 0);
+            Check(pose.Angle == previousAngle, "Unlaid-out overlays do not corrupt the pose");
             var stroke = new InkStroke();
             stroke.Add(new Point(-200, 100));
             stroke.Add(new Point(-199, 100));
@@ -90,6 +113,7 @@ internal static class Program
                 foreach (Window window in app.Windows)
                 {
                     window.UpdateLayout();
+                    if (window is OverlayWindow overlay) overlay.UpdatePose();
                     Check(window.ActualWidth > 0 && window.ActualHeight > 0, "Overlay has nonzero dimensions");
                     var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                     bitmap.Render(window);

@@ -13,6 +13,7 @@ internal sealed class OverlayWindow : Window
     private readonly System.Drawing.Rectangle bounds;
     private BitmapSource? hand;
     private Point fingertip;
+    private readonly HandPose pose = new();
     private readonly Pen ink = new(new SolidColorBrush(Color.FromRgb(225, 65, 100)), 4)
     {
         StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round
@@ -97,6 +98,12 @@ internal sealed class OverlayWindow : Window
 
     protected override void OnMouseWheel(MouseWheelEventArgs e) => e.Handled = true;
 
+    internal void UpdatePose()
+    {
+        if (hand != null)
+            pose.Update(PointFromScreen(controller.Cursor), ActualWidth, ActualHeight);
+    }
+
     protected override void OnRender(DrawingContext dc)
     {
         base.OnRender(dc);
@@ -131,8 +138,9 @@ internal sealed class OverlayWindow : Window
         if (hand != null)
         {
             double scale = (double)controller.PointerHeight / hand.PixelHeight;
-            dc.DrawImage(hand, new Rect(cursor.X - fingertip.X * scale, cursor.Y - fingertip.Y * scale,
-                hand.PixelWidth * scale, hand.PixelHeight * scale));
+            dc.PushTransform(new MatrixTransform(pose.Transform(cursor, fingertip, scale)));
+            dc.DrawImage(hand, new Rect(0, 0, hand.PixelWidth, hand.PixelHeight));
+            dc.Pop();
         }
         else
         {
