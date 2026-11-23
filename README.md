@@ -1,69 +1,124 @@
-<img src="./.github/logo.png" width="80" />
+<img src="./.github/logo.png" width="80" alt="TinyHand logo" />
 
-# TinyHand
+# TinyHand for Windows
 
-[![Latest release](https://img.shields.io/github/v/release/nilbuild/tinyhand?display_name=tag&sort=semver&cacheSeconds=3600)](https://github.com/nilbuild/tinyhand/releases/latest)
-[![Platform: macOS](https://img.shields.io/badge/platform-macOS-lightgrey)](https://tinyhand.app)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Latest Windows release](https://img.shields.io/github/v/release/zebrajaeger/tinyhand-windows?filter=windows-v*&display_name=tag&sort=date)](https://github.com/zebrajaeger/tinyhand-windows/releases)
+[![Platform: Windows 10/11 x64](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078D4)](https://github.com/zebrajaeger/tinyhand-windows/releases)
+[![License: MIT](https://img.shields.io/github/license/zebrajaeger/tinyhand-windows)](./LICENSE)
 
-A tiny hand on a stick that points at things on your Mac screen.
+A tiny hand that points at things on your Windows screen. Highlight a detail,
+draw on the desktop, or add arrows during a presentation or screen recording.
 
-<img src="./.github/banner.jpg" alt="TinyHand: a tiny hand for your Mac" />
+This is a native Windows port and fork of **[TinyHand by nilbuild](https://github.com/nilbuild/tinyhand)**.
+The original macOS app, concept, hand artwork and sounds come from that project.
+For the macOS version, visit [nilbuild/tinyhand](https://github.com/nilbuild/tinyhand)
+or [tinyhand.app](https://tinyhand.app).
 
-[![Download for macOS](https://img.shields.io/badge/Download_for_macOS-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/nilbuild/tinyhand/releases/latest/download/TinyHand.dmg)
-[![Visit website](https://img.shields.io/badge/Visit_website-ffffff?style=for-the-badge&logo=safari&logoColor=black)](https://tinyhand.app)
+[![Download for Windows](https://img.shields.io/badge/Download_for_Windows-0078D4?style=for-the-badge)](https://github.com/zebrajaeger/tinyhand-windows/releases)
 
-macOS 13 or later, Apple Silicon and Intel.
+## Download and run
 
-## Windows (experimental)
+1. Open the [Windows releases](https://github.com/zebrajaeger/tinyhand-windows/releases).
+2. Download `TinyHand-Windows-<version>-win-x64.zip` from the release assets.
+3. Extract the ZIP and run **`TinyHand.Windows.exe`**.
 
-A native Windows first version is available in [`windows/`](windows/README.md),
-with hand/laser pointers, screen drawing, arrows, global shortcuts and a tray menu.
-See that guide for building a portable executable and current limitations.
+Requires **Windows 10/11 x64**. The app is portable: no installer, administrator
+rights or separate .NET installation are needed. A SHA-256 checksum is included
+with each Windows release. GitHub's automatic source-code archives do not contain
+the executable.
 
-## Install (macOS)
+The application is **unsigned**, so Windows SmartScreen may show a warning.
 
-Open `TinyHand.dmg`, drag TinyHand to Applications and allow **Accessibility** when asked. It needs that to turn your clicks into taps. TinyHand updates itself.
+After launch, look for the hand icon in the system tray, possibly under the hidden
+icons. The pointer starts **off**. The tray icon follows your selected hand style;
+in laser mode it shows the lavender hand. The EXE uses the cookie hand as its icon.
 
 ## Use
 
-| | |
+| Action | Result |
 |---|---|
-| Click the menu bar icon, or **⌃⌥H** | Turn the pointer on or off |
-| Right-click the menu bar icon | Menu and Settings |
-| Click | Tap (nothing underneath gets clicked) |
-| Hold and drag | Draw on the screen |
-| Hold **⌘** while drawing | Add an arrowhead to the end of the line |
-| **⌃⌥X** | Clear the drawing |
-| **Esc** | Clear everything and turn the pointer off |
+| **Ctrl+Alt+H** or left-click the tray icon | Turn the pointer on or off |
+| Right-click the tray icon | Choose a hand or laser, pointer size, tap sound, or quit |
+| Left-click while the pointer is on | Show a tap effect and optionally play a sound |
+| Hold the left mouse button and drag | Draw on the screen |
+| Hold **Shift when releasing** the left mouse button | Add an arrowhead |
+| **Ctrl+Alt+X** | Clear the drawing |
+| **Esc** | Clear the drawing and turn the pointer off |
 
-While the pointer is on, a small toolbar at the bottom of the screen lets you pick one of
-36 hands or a laser dot, mute the tap sound, or exit.
+**While the pointer is on, the overlay blocks clicks and scrolling in applications
+underneath.** Turn it off with **Esc** or **Ctrl+Alt+H** before using other apps or
+opening the tray menu. Ordinary keyboard input is not blocked and can still reach
+the previously focused application.
 
-## Automation
+## Features
 
-Launchers like Raycast or Alfred, and shell scripts, can control TinyHand with
-`tinyhand://` links. Use `open -g` so TinyHand doesn't take focus:
+- Built-in hand styles and a laser dot.
+- Dynamic hand tilt with smooth grip tracking; the fingertip stays on the cursor.
+- Screen drawing, arrows and an animated tap indicator.
+- Three pointer sizes and six selectable tap sounds with previews.
+- Saved hand, size and sound preferences. Tap sounds are off by default.
+- An overlay on each monitor.
+- A silent audio keep-alive while the pointer and tap sounds are enabled, to avoid
+  losing short sounds when a headset wakes up between clicks.
 
-```sh
-open -g tinyhand://toggle
+Settings are stored in `%USERPROFILE%\.config\TinyHand\settings.json`.
+Audio diagnostics are stored alongside them in `audio.log`.
+The pointer always starts off, even when preferences are restored.
+
+## Current limitations
+
+This Windows port does not yet include all features of the original macOS app:
+
+- No installer, code signing, auto-updater or built-in autostart.
+- No floating toolbar, full settings window, custom hands or URL automation.
+- No click-through mode or separately extended arm/stick segment.
+- Monitor-layout changes clear the current drawing. Test mixed-DPI setups before
+  an important presentation.
+- Secure desktops such as UAC prompts are not covered; exclusive fullscreen and
+  some protected applications may hide the overlay.
+
+When screen sharing, **share the entire display**. Sharing only an application
+window usually does not include TinyHand's separate overlay.
+
+## Build and test
+
+Development requires **Windows and the .NET 10 SDK**. The Windows app uses C# and
+WPF; the original Swift/macOS sources remain in this repository.
+
+```powershell
+dotnet build windows/TinyHand.Windows -c Release
+dotnet run --project windows/TinyHand.Windows.Tests -c Release
+./windows/publish.ps1
 ```
 
-| Link | Action |
-|---|---|
-| `tinyhand://on`, `tinyhand://off`, `tinyhand://toggle` | Turn the pointer on, off, or flip it |
-| `tinyhand://clear` | Clear the drawing |
-| `tinyhand://style/<id>` | Switch to a hand (or `laser`) and turn the pointer on |
-| `tinyhand://sound/on`, `/off`, `/toggle` | Tap sound for the current pointer |
+The portable output is `dist/windows/win-x64/TinyHand.Windows.exe`.
+Close any running copy from that directory before publishing again.
+Tests briefly open overlay windows on the desktop. The optional audible regression
+test requires a working audio device:
 
-While TinyHand runs, it keeps its current state in
-`~/Library/Application Support/TinyHand/state.json`: whether the pointer is on, the
-selected style, whether sound is on, and every style with its `id`, name and type
-(`hand`, `custom` or `laser`). The file is removed when TinyHand quits. It also
-records the app's `pid`, so a file left behind by a crash can be detected.
+```powershell
+dotnet run --project windows/TinyHand.Windows.Tests -c Release -- --audio-regression
+```
 
-If TinyHand isn't running, opening any link launches it and then runs the command.
+See the [Windows development guide](windows/README.md) for audio diagnostics,
+optional ARM64 builds and further implementation details. Published releases
+currently provide **x64** builds only.
 
-## License
+## Publishing releases
 
-MIT. See [LICENSE](LICENSE).
+The [Windows Release workflow](.github/workflows/windows-release.yml) runs when a
+tag matching `windows-vMAJOR.MINOR.PATCH` is pushed. It tests and builds the app,
+then publishes a portable ZIP and SHA-256 checksum to this fork's GitHub Releases.
+Tags with a suffix, such as `windows-v0.2.0-beta.1`, create a pre-release.
+Windows release tags are separate from the original macOS tags (`v*`).
+
+For setup and tagging instructions, see [GitHub releases in the Windows guide](windows/README.md#github-releases).
+
+## Credits and license
+
+Based on [nilbuild/tinyhand](https://github.com/nilbuild/tinyhand), the original
+TinyHand project by **Kamran Ahmed**. Thanks to the original project and its
+contributors for the app concept, artwork, sounds and macOS implementation.
+
+This fork remains licensed under the **MIT License**. See [LICENSE](LICENSE) for
+the terms and original copyright notice.
