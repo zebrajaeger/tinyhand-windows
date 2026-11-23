@@ -77,4 +77,10 @@ Keep `windows/publish.ps1` and existing GitHub release workflow unchanged. Provi
 
 ## Verification and rollout
 
+### Subsequent user-approved presentation decisions
+
+The fixed Windows icon, Stream Deck category and pointer action now use the tilted cactus artwork from `.github/logo-windows.png`. All keys and sidebar actions share that background with function badges, labels and selection markers instead of solid green fills. The dynamically selected on-screen hand and style-dependent tray icon remain unchanged. `windows/make-app-icon.ps1` generates multi-resolution app/brand images from the same source. The current local plugin build is 0.1.0.5; installation was confirmed through the live TinyHand-specific Stream Deck dialog without removing profiles.
+
+Manual/hardware acceptance remains pending. The user explicitly approved dependent implementation before final acceptance/synchronization, and later approved archiving with unfinished tasks retained. Do not read archive placement as evidence of completed isolation, device, IME, DPI, screenshot-paste or listening tests.
+
 Apply/sync annotations, then screenshots, then this change. Use isolated pipe names and settings in tests. Add real .NET/Node interoperability smoke coverage, frame/ACL/error tests and plugin tests with a mocked SDK/transport. On actual Stream Deck verify every action, multiple copies of a key, state updates from tray/Esc/hotkeys, app/plugin restart, unplug/reconnect, busy operations, failed screenshots and text focus. Recheck the audio first-click-after-idle on the real headset after sound toggles. No publication or installation is performed as part of proposal authoring.

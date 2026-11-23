@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Resources;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
@@ -28,6 +30,21 @@ internal sealed class PointerController : IDisposable
     private bool escapeRegistered;
     private bool disposed;
     private bool escapeWasDown;
+    private readonly AnnotationDocument document = new();
+    private readonly Forms.ToolStripMenuItem colors = new("Zeichenfarbe");
+    private Forms.ToolStripMenuItem soundToggle = null!;
+    private AnnotationEditor? editor;
+    private string? textColor;
+    private bool beforeTextActive;
+    private Point textAnchor;
+    private IntPtr beforeTextForeground;
+    internal string TextPhase { get; private set; } = "idle";
+    internal bool Interactive => Active || TextPhase == "placing";
+    internal event Action? StateChanged;
+    private readonly MonitorCapture capture;
+    private readonly CancellationTokenSource lifetime = new();
+    private bool acquiring;
+    internal ControllerState State => new(Active, PointerHeight, settings.SoundEnabled, SelectedColor, TextPhase, document.Items.Count, capture.Pending);
 
     internal bool Active { get; private set; }
     internal string Style { get; private set; } = "lavender";
@@ -35,14 +52,26 @@ internal sealed class PointerController : IDisposable
     internal string TrayIconStyle => TrayHandIcon.HandStyle(Style);
     internal System.Drawing.Icon TrayIcon => trayIcon;
     internal Point Cursor { get; private set; }
-    internal List<InkStroke> Strokes { get; } = new();
+    internal IReadOnlyList<StrokeAnnotation> Strokes => document.Items.OfType<StrokeAnnotation>().ToArray();
+    internal IReadOnlyList<Annotation> Annotations => document.Items;
+    internal string SelectedColor => settings.AnnotationColor;
     internal InkStroke? Current { get; private set; }
     internal IntPtr MessageHandle => messages.Handle;
     internal DateTime TapTime { get; private set; }
     internal Point TapPoint { get; private set; }
 
-    internal PointerController(string? settingsPath = null)
+    internal PointerController(string? settingsPath = null, IMonitorCapturePlatform? capturePlatform = null)
     {
+        capture = new MonitorCapture(capturePlatform ?? new WindowsMonitorCapturePlatform(bounds =>
+        {
+            var overlay = windows.FirstOrDefault(w => w.DesktopBounds == bounds);
+            if (overlay != null)
+            {
+                var scale = System.Windows.Media.VisualTreeHelper.GetDpi(overlay);
+                return (scale.DpiScaleX, scale.DpiScaleY);
+            }
+            return MonitorDpi.Get(bounds);
+        }));
         this.settingsPath = settingsPath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "TinyHand", "settings.json");
         settings = Settings.Load(this.settingsPath);
         Style = settings.Style;
@@ -55,7 +84,22 @@ internal sealed class PointerController : IDisposable
         var menu = new Forms.ContextMenuStrip();
         toggle = new Forms.ToolStripMenuItem("Einschalten (Strg+Alt+H)", null, (_, _) => SetActive(!Active));
         menu.Items.Add(toggle);
-        menu.Items.Add("Zeichnung löschen (Strg+Alt+X)", null, (_, _) => Clear());
+        menu.Items.Add("Alles löschen (Strg+Alt+X)", null, (_, _) => Clear());
+        foreach (var color in new[] { ("Pink", "#E14164"), ("Rot", "#FF0000"), ("Gelb", "#FFFF00"), ("Grün", "#00C853"), ("Blau", "#2979FF"), ("Weiß", "#FFFFFF"), ("Schwarz", "#000000") })
+        {
+            var item = new Forms.ToolStripMenuItem(color.Item1) { Tag = color.Item2, Checked = SelectedColor == color.Item2 };
+            item.Click += (_, _) => SetAnnotationColor((string)item.Tag);
+            colors.DropDownItems.Add(item);
+        }
+        menu.Items.Add(colors);
+        menu.Items.Add("Text platzieren", null, (_, _) => BeginTextPlacement());
+        menu.Items.Add("Screenshot in Zwischenablage", null, async (_, _) =>
+        {
+            var result = await CaptureMonitorAsync();
+            if (!disposed) tray!.ShowBalloonTip(3000, "TinyHand", result.Ok ? "Screenshot in die Zwischenablage kopiert."
+                : result.Error == "busy" ? "Screenshot nicht möglich: Eingabe oder Aufnahme läuft."
+                : "Screenshot konnte nicht kopiert werden.", result.Ok ? Forms.ToolTipIcon.Info : Forms.ToolTipIcon.Warning);
+        });
         styles = new Forms.ToolStripMenuItem("Zeiger");
         foreach (string style in AvailableStyles())
         {
@@ -73,13 +117,8 @@ internal sealed class PointerController : IDisposable
             sizes.DropDownItems.Add(item);
         }
         menu.Items.Add(sizes);
-        var soundToggle = new Forms.ToolStripMenuItem("Tippgeräusch") { Checked = settings.SoundEnabled, CheckOnClick = true };
-        soundToggle.CheckedChanged += (_, _) =>
-        {
-            settings.SoundEnabled = soundToggle.Checked;
-            audio.SetKeepAlive(Active && settings.SoundEnabled);
-            SaveSettings();
-        };
+        soundToggle = new Forms.ToolStripMenuItem("Tippgeräusch") { Checked = settings.SoundEnabled };
+        soundToggle.Click += (_, _) => SetSoundEnabled(!settings.SoundEnabled);
         menu.Items.Add(soundToggle);
         sounds = new Forms.ToolStripMenuItem("Geräusch auswählen");
         foreach (string name in TapSound.Names)
@@ -110,7 +149,7 @@ internal sealed class PointerController : IDisposable
         menu.Opening += (_, _) => startupToggle.Checked = startup.Enabled;
         menu.Items.Add(startupToggle);
         menu.Items.Add("Bedienung", null, (_, _) => MessageBox.Show(
-            "Strg+Alt+H: Zeiger ein/aus\nZiehen: zeichnen\nUmschalt beim Loslassen: Pfeil\nStrg+Alt+X: Zeichnung löschen\nEsc: löschen und ausschalten\n\nIm Zeigemodus werden Mausklicks abgefangen.\nZum Bedienen anderer Apps den Zeiger ausschalten.\nRechtsklick auf das Tray-Symbol: Menü.", "TinyHand für Windows"));
+            "Strg+Alt+H: Zeiger ein/aus (Anmerkungen bleiben)\nZiehen: zeichnen\nUmschalt beim Loslassen: Pfeil\nStrg+Alt+X: Alles löschen\nEsc: ausschalten / Texteingabe abbrechen\n\nText platzieren: Position anklicken, tippen, mit Enter bestätigen.\nIm Zeigemodus werden Mausklicks abgefangen.\nOhne Zeiger sind Anmerkungen klickdurchlässig.", "TinyHand für Windows"));
         menu.Items.Add("Beenden", null, (_, _) => Application.Current.Shutdown());
         trayIcon = TrayHandIcon.Create(Style);
         tray = new Forms.NotifyIcon
@@ -147,6 +186,7 @@ internal sealed class PointerController : IDisposable
 
     internal void SelectStyle(string style)
     {
+        if (DeferDuringCapture(() => SelectStyle(style))) return;
         if (!AvailableStyles().Contains(style)) return;
         var nextIcon = TrayHandIcon.Create(style);
         tray.Icon = nextIcon;
@@ -163,29 +203,36 @@ internal sealed class PointerController : IDisposable
 
     internal void SetPointerHeight(int height)
     {
+        if (DeferDuringCapture(() => SetPointerHeight(height))) return;
         settings.PointerHeight = Math.Clamp(height, 160, 640);
         foreach (Forms.ToolStripMenuItem item in sizes.DropDownItems) item.Checked = (int)item.Tag! == settings.PointerHeight;
         SaveSettings();
         foreach (var window in windows) window.InvalidateVisual();
+        StateChanged?.Invoke();
     }
 
     private void SaveSettings()
     {
-        if (!settings.Save(settingsPath))
+        PersistenceWarning = !settings.Save(settingsPath);
+        if (PersistenceWarning)
             tray.ShowBalloonTip(4000, "TinyHand", "Einstellungen konnten nicht gespeichert werden. Änderungen gelten nur für diese Sitzung.", Forms.ToolTipIcon.Warning);
     }
 
+    internal bool PersistenceWarning { get; private set; }
+    internal void ResetPersistenceWarning() => PersistenceWarning = false;
+
     internal void SetActive(bool active)
     {
+        if (DeferDuringCapture(() => SetActive(active))) return;
+        if (TextPhase != "idle") FinishText(null, active);
         if (Active == active) return;
         Active = active;
         audio.SetKeepAlive(active && settings.SoundEnabled);
         if (active)
         {
-            Strokes.Clear();
             escapeRegistered = Native.RegisterHotKey(messages.Handle, 3, 0x4000, 0x1B);
             escapeWasDown = false;
-            CreateOverlays();
+            if (windows.Count == 0) CreateOverlays();
             timer.Start();
         }
         else
@@ -194,12 +241,109 @@ internal sealed class PointerController : IDisposable
             if (escapeRegistered) Native.UnregisterHotKey(messages.Handle, 3);
             escapeRegistered = false;
             Current = null;
-            foreach (var window in windows) window.Close();
-            windows.Clear();
-            Strokes.Clear();
+            if (document.Items.Count == 0) CloseOverlays();
         }
+        foreach (var window in windows) { window.UpdateInteraction(); window.InvalidateVisual(); }
         toggle.Text = active ? "Ausschalten (Strg+Alt+H)" : "Einschalten (Strg+Alt+H)";
         tray.Text = active ? "TinyHand aktiv — Esc zum Ausschalten" : "TinyHand — Strg+Alt+H zum Einschalten";
+        StateChanged?.Invoke();
+    }
+
+    internal bool BeginTextPlacement()
+    {
+        if (capture.Pending) return false;
+        if (TextPhase != "idle" || Current != null) return false;
+        beforeTextActive = Active;
+        beforeTextForeground = Native.GetForegroundWindow();
+        textColor = SelectedColor;
+        TextPhase = "placing";
+        if (windows.Count == 0) CreateOverlays();
+        foreach (var window in windows) { window.UpdateInteraction(); window.InvalidateVisual(); }
+        if (!Active)
+        {
+            escapeRegistered = Native.RegisterHotKey(messages.Handle, 3, 0x4000, 0x1B);
+            escapeWasDown = false;
+            timer.Start();
+        }
+        StateChanged?.Invoke();
+        return true;
+    }
+
+    internal void PlaceText(Point point)
+    {
+        if (TextPhase != "placing") return;
+        textAnchor = point;
+        TextPhase = "editing";
+        // The focused editor owns Esc now, not the global hotkey/tick fallback.
+        if (escapeRegistered) Native.UnregisterHotKey(messages.Handle, 3);
+        escapeRegistered = false;
+        foreach (var window in windows) { window.UpdateInteraction(); window.InvalidateVisual(); }
+        editor = new AnnotationEditor(point, textColor!, (text, restoreFocus) => FinishText(text, allowFocusRestore: restoreFocus));
+        editor.Show();
+        editor.Activate();
+        StateChanged?.Invoke();
+    }
+
+    internal void FinishText(string? text, bool? requestedActive = null, bool allowFocusRestore = true)
+    {
+        if (TextPhase == "idle") return;
+        bool restoreFocus = allowFocusRestore && editor != null && Native.GetForegroundWindow() == new WindowInteropHelper(editor).Handle;
+        text = text == null ? null : AnnotationText.Normalize(text);
+        if (!string.IsNullOrWhiteSpace(text)) document.Commit(new TextAnnotation(textAnchor, text, textColor!));
+        TextPhase = "idle";
+        var oldEditor = editor;
+        editor = null;
+        oldEditor?.Dismiss();
+        if (escapeRegistered) Native.UnregisterHotKey(messages.Handle, 3);
+        escapeRegistered = false;
+        bool active = requestedActive ?? beforeTextActive;
+        if (Active != active) SetActive(active);
+        if (active)
+        {
+            escapeRegistered = Native.RegisterHotKey(messages.Handle, 3, 0x4000, 0x1B);
+            escapeWasDown = Native.GetAsyncKeyState(0x1B) < 0;
+        }
+        else
+        {
+            timer.Stop();
+            if (document.Items.Count == 0) CloseOverlays();
+        }
+        foreach (var window in windows) { window.UpdateInteraction(); window.InvalidateVisual(); }
+        if (restoreFocus && Native.IsWindow(beforeTextForeground)) Native.SetForegroundWindow(beforeTextForeground);
+        StateChanged?.Invoke();
+    }
+
+    private void Escape()
+    {
+        if (TextPhase != "idle") FinishText(null);
+        else SetActive(false);
+    }
+
+    private void CloseOverlays()
+    {
+        foreach (var window in windows) window.Close();
+        windows.Clear();
+    }
+
+    internal void SetSoundEnabled(bool enabled)
+    {
+        if (DeferDuringCapture(() => SetSoundEnabled(enabled))) return;
+        settings.SoundEnabled = enabled;
+        soundToggle.Checked = enabled;
+        audio.SetKeepAlive(Active && enabled);
+        SaveSettings();
+        StateChanged?.Invoke();
+    }
+
+    internal bool SetAnnotationColor(string color)
+    {
+        if (!AnnotationColor.IsValid(color)) return false;
+        if (DeferDuringCapture(() => SetAnnotationColor(color))) return true;
+        settings.AnnotationColor = AnnotationColor.Normalize(color);
+        foreach (Forms.ToolStripMenuItem item in colors.DropDownItems) item.Checked = (string)item.Tag! == SelectedColor;
+        SaveSettings();
+        StateChanged?.Invoke();
+        return true;
     }
 
     private void CreateOverlays()
@@ -217,7 +361,7 @@ internal sealed class PointerController : IDisposable
     {
         // Fallback when another program owns the plain Escape hotkey.
         bool escape = Native.GetAsyncKeyState(0x1B) < 0;
-        if (escape && !escapeWasDown) { SetActive(false); return; }
+        if (TextPhase != "editing" && escape && !escapeWasDown) { escapeWasDown = true; Escape(); return; }
         escapeWasDown = escape;
         if (Native.GetCursorPos(out var p)) Cursor = new Point(p.X, p.Y);
         foreach (var window in windows)
@@ -229,11 +373,10 @@ internal sealed class PointerController : IDisposable
 
     internal void Begin(Point point)
     {
-        Current = new InkStroke();
+        if (acquiring) return;
+        if (!Active || TextPhase != "idle") return;
+        Current = new InkStroke(SelectedColor);
         Current.Add(point);
-        Strokes.Add(Current);
-        // Bound memory in unusually long presentations.
-        if (Strokes.Count > 500) Strokes.RemoveAt(0);
         TapPoint = point;
         TapTime = DateTime.UtcNow;
         AudioLog.Write($"Pointer click: soundEnabled={settings.SoundEnabled}; sound={settings.Sound}");
@@ -246,14 +389,20 @@ internal sealed class PointerController : IDisposable
         if (Current == null) return;
         Current.Add(point);
         Current.Arrow = arrow;
+        if (Current.Points.Count >= 2) document.Commit(Current.Snapshot());
         Current = null;
+        StateChanged?.Invoke();
     }
 
     internal void Clear()
     {
+        if (DeferDuringCapture(Clear)) return;
+        if (TextPhase != "idle") FinishText(null);
         Current = null;
-        Strokes.Clear();
+        document.Clear();
+        if (!Active) CloseOverlays();
         foreach (var window in windows) window.InvalidateVisual();
+        StateChanged?.Invoke();
     }
 
     private IntPtr OnMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -263,7 +412,7 @@ internal sealed class PointerController : IDisposable
         {
             case 1: SetActive(!Active); break;
             case 2: Clear(); break;
-            case 3: SetActive(false); break;
+            case 3: Escape(); break;
         }
         handled = true;
         return IntPtr.Zero;
@@ -271,17 +420,60 @@ internal sealed class PointerController : IDisposable
 
     private void DisplayChanged(object? sender, EventArgs e) => Application.Current.Dispatcher.BeginInvoke(() =>
     {
-        if (!Active || disposed) return;
-        SetActive(false);
-        SetActive(true);
+        if (disposed) return;
+        if (DeferDuringCapture(() => DisplayChanged(sender, e))) return;
+        bool active = Active;
+        if (TextPhase != "idle") FinishText(null);
+        Current = null;
+        document.Clear();
+        CloseOverlays();
+        if (active) CreateOverlays();
+        StateChanged?.Invoke();
     });
+
+    private readonly Queue<Action> deferredCaptureCommands = new();
+    private bool DeferDuringCapture(Action command)
+    {
+        if (!acquiring) return false;
+        deferredCaptureCommands.Enqueue(command);
+        return true;
+    }
+
+    internal async Task<CaptureResult> CaptureMonitorAsync()
+    {
+        if (disposed) return new(false, "cancelled");
+        var task = capture.CaptureAsync(document.Snapshot(), Current != null || TextPhase != "idle", (target, suppress) =>
+        {
+            acquiring = suppress;
+            foreach (var window in windows.Where(w => w.DesktopBounds == target.Bounds))
+            {
+                window.CaptureSuppressed = suppress;
+                window.InvalidateVisual();
+                if (suppress) window.UpdateLayout();
+            }
+            if (!suppress)
+            {
+                while (deferredCaptureCommands.TryDequeue(out var command))
+                    if (!disposed) command();
+            }
+        }, lifetime.Token);
+        StateChanged?.Invoke();
+        var result = await task;
+        if (!disposed) StateChanged?.Invoke();
+        return result;
+    }
 
     public void Dispose()
     {
         if (disposed) return;
         disposed = true;
+        lifetime.Cancel();
+        acquiring = false;
+        deferredCaptureCommands.Clear();
         SystemEvents.DisplaySettingsChanged -= DisplayChanged;
         SetActive(false);
+        document.Clear();
+        CloseOverlays();
         timer.Stop();
         Native.UnregisterHotKey(messages.Handle, 1);
         Native.UnregisterHotKey(messages.Handle, 2);

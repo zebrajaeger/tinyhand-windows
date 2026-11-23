@@ -7,3 +7,7 @@ dist/
 assets/unused/
 **/bin/
 **/obj/
+stream-deck/node_modules/
+stream-deck/build/
+stream-deck/out/
+*.streamDeckPlugin

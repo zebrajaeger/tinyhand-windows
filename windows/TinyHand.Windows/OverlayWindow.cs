@@ -14,10 +14,8 @@ internal sealed class OverlayWindow : Window
     private BitmapSource? hand;
     private Point fingertip;
     private readonly HandPose pose = new();
-    private readonly Pen ink = new(new SolidColorBrush(Color.FromRgb(225, 65, 100)), 4)
-    {
-        StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round
-    };
+    internal Rect DesktopBounds => new(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+    internal bool CaptureSuppressed { get; set; }
 
     internal OverlayWindow(PointerController controller, System.Drawing.Rectangle bounds)
     {
@@ -40,8 +38,19 @@ internal sealed class OverlayWindow : Window
             var handle = new WindowInteropHelper(this).Handle;
             Native.SetWindowLong(handle, -20, Native.GetWindowLong(handle, -20) | 0x08000000 | 0x00000080);
             Native.SetWindowPos(handle, new IntPtr(-1), bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x0010);
+            UpdateInteraction();
         };
         LoadStyle();
+    }
+
+    internal void UpdateInteraction()
+    {
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero) return;
+        int style = Native.GetWindowLong(handle, -20);
+        Native.SetWindowLong(handle, -20, controller.Interactive && controller.TextPhase != "editing" ? style & ~0x20 : style | 0x20);
+        Cursor = controller.TextPhase == "placing" ? Cursors.Cross : controller.Active ? Cursors.None : Cursors.Arrow;
+        if (!controller.Interactive && IsMouseCaptured) ReleaseMouseCapture();
     }
 
     internal void LoadStyle()
@@ -71,6 +80,12 @@ internal sealed class OverlayWindow : Window
     protected override void OnMouseDown(MouseButtonEventArgs e)
     {
         e.Handled = true;
+        if (controller.TextPhase == "placing")
+        {
+            if (e.ChangedButton == MouseButton.Left) controller.PlaceText(PointToScreen(e.GetPosition(this)));
+            return;
+        }
+        if (!controller.Active || controller.TextPhase != "idle") return;
         if (e.ChangedButton != MouseButton.Left) return;
         CaptureMouse();
         controller.Begin(PointToScreen(e.GetPosition(this)));
@@ -107,27 +122,14 @@ internal sealed class OverlayWindow : Window
     protected override void OnRender(DrawingContext dc)
     {
         base.OnRender(dc);
+        if (CaptureSuppressed) return;
         dc.PushClip(new RectangleGeometry(new Rect(0, 0, ActualWidth, ActualHeight)));
-        double dpi = VisualTreeHelper.GetDpi(this).DpiScaleX;
-        foreach (var stroke in controller.Strokes)
-        {
-            if (stroke.Points.Count < 2) continue;
-            var path = new StreamGeometry();
-            using (var context = path.Open())
-            {
-                context.BeginFigure(PointFromScreen(stroke.Points[0]), false, false);
-                for (int i = 1; i < stroke.Points.Count; i++)
-                    context.LineTo(PointFromScreen(stroke.Points[i]), true, false);
-            }
-            dc.DrawGeometry(null, ink, path);
-            var arrow = stroke.Arrowhead(20 * dpi);
-            if (arrow is { } a)
-            {
-                var end = PointFromScreen(stroke.Points[^1]);
-                dc.DrawLine(ink, end, PointFromScreen(a.Left));
-                dc.DrawLine(ink, end, PointFromScreen(a.Right));
-            }
-        }
+        var dpi = VisualTreeHelper.GetDpi(this);
+        var rect = new Rect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+        AnnotationRenderer.Draw(dc, controller.Annotations, rect, dpi.DpiScaleX, dpi.DpiScaleY);
+        if (controller.Current is { } pending)
+            AnnotationRenderer.Draw(dc, new[] { pending.Snapshot() }, rect, dpi.DpiScaleX, dpi.DpiScaleY);
+        if (!controller.Active || controller.TextPhase != "idle") { dc.Pop(); return; }
         double age = (DateTime.UtcNow - controller.TapTime).TotalSeconds;
         if (age >= 0 && age < 0.4)
         {

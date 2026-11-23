@@ -18,7 +18,7 @@ Nach dem Start erscheint TinyHand im Infobereich der Taskleiste, gegebenenfalls
 unter den ausgeblendeten Symbolen. Der Zeiger ist zunächst ausgeschaltet.
 Das Tray-Symbol zeigt die gewählte Hand ohne Stab und aktualisiert sich beim
 Stilwechsel. Im Laser-Modus wird die lavender-Hand als App-Symbol verwendet.
-Die EXE verwendet die Cookie-Hand als festes Anwendungssymbol.
+Die EXE verwendet das schräge Kaktus-Logo aus der README als festes Anwendungssymbol.
 
 Im Tray-Menü aktiviert **Mit Windows starten** den Start nach der Anmeldung für
 den aktuellen Benutzer, ohne Administratorrechte. Standardmäßig ist die Option
@@ -38,7 +38,7 @@ zusätzlich unabhängig von diesem Registry-Eintrag deaktivieren.
 - **Linke Maustaste halten und ziehen**: zeichnen.
 - **Umschalt beim Loslassen halten**: Pfeilspitze hinzufügen.
 - **Strg+Alt+X**: Zeichnung löschen.
-- **Esc**: Zeichnung löschen und Zeigemodus beenden.
+- **Esc**: Zeigemodus ohne Löschen beenden; ausstehenden Text abbrechen.
 
 Im Tray-Menü stehen drei Zeigergrößen und sechs Tippgeräusche zur Wahl.
 Die Geräuschauswahl spielt eine Vorschau; der Schalter **Tippgeräusch** aktiviert
@@ -50,13 +50,43 @@ Fehlende oder beschädigte Einstellungen werden durch sichere Standardwerte erse
 Im aktiven Modus blockiert ein transparentes Overlay Mausklicks und Scrollen
 auf den normalen Desktop-Anwendungen. Zum normalen Arbeiten und für das Tray-Menü
 zuerst **Esc** oder **Strg+Alt+H** drücken. Tastatureingaben werden abgesehen von den
-registrierten Hotkeys nicht abgefangen: Text kann weiterhin in die zuvor aktive
+registrierten Hotkeys und dem expliziten Texteditor nicht abgefangen: Text kann weiterhin in die zuvor aktive
 Anwendung gelangen. Belegte Hotkeys werden beim Start gemeldet.
 
 Pro Monitor wird ein Overlay angelegt; Zeichenpunkte werden in physischen
 Desktopkoordinaten gespeichert. Eine Änderung der Monitoranordnung setzt die
 Zeichnung zurück. Unterschiedliche DPI-Skalierungen vor einem wichtigen Vortrag
 auf dem konkreten System prüfen.
+
+## Anmerkungen und Texteingabe
+
+Ohne Zeiger bleiben fertige Anmerkungen in nicht aktivierenden, klickdurchlässigen
+Overlays sichtbar; Hand/Laser und Audio-Keep-alive sind aus. **Alles löschen**
+(`Strg+Alt+X`) entfernt Linien, Texte und ausstehende Eingaben ohne Aktivierungswechsel.
+Beenden und Monitoränderungen verwerfen Inhalte; jeder Start hat ein leeres Dokument.
+
+**Zeichenfarbe** wird gespeichert und gilt für neue Elemente. **Text platzieren**
+startet die Platzierung: Position anklicken, tippen, Enter bestätigt, Esc bricht ab.
+Fokusverlust bricht ohne Zurückstehlen des Fokus ab. Nur der fokussierte Texteditor
+ist eine Ausnahme von der normalen Tastaturdurchleitung. Text ist einzeilig,
+maximal 500 Unicode-Skalarwerte, fest 28 DIP Segoe UI und nach Bestätigung nicht
+bearbeitbar. Linien und Texte teilen eine Historie von 500 Elementen; beim
+Bestätigen wird nötigenfalls das älteste entfernt.
+
+**Screenshot in Zwischenablage** nimmt den Monitor unter dem aktuellen Windows-
+Mauszeiger in physischen Pixeln auf. Fertige Texte/Linien/Pfeile erscheinen einmal;
+Hand, Laser und Tippanimation fehlen. Das Bild in ein anderes Programm einfügen;
+keine automatische Dateiablage oder Übertragung. Ausstehender Text/Strich und
+laufende Aufnahmen führen zu einer Belegt-Meldung. Fehler stellen die Overlays
+wieder her und werden nicht als Erfolg gemeldet. Clipboard-Wiederholungen sind
+begrenzt; das Aufnahmelimit beträgt fünf Sekunden. Sichere/geschützte Desktops und
+exklusive Vollbildinhalte können leer bleiben; Clipboard-Erfolg beweist keine
+Aufnahme geschützter Pixel. Das optionale [Stream-Deck-Plugin](../stream-deck/README.de.md)
+wird separat für Stream Deck 7.1+ gebaut und lokal installiert. Protokoll v1 nutzt
+eine begrenzte Named-Pipe für denselben Benutzer/dieselbe Windows-Sitzung, nur bei
+normalem App-Start, nicht bei Ressourcenprüfung. Kein Netzwerklistener oder
+automatischer App-Start. Plugin-Werkzeuge sind keine portable Build-Abhängigkeit.
+Hardware-/Fremdbenutzer-/Sitzungsabnahme getrennt von automatischen Tests festhalten.
 
 ## Bauen und prüfen
 
@@ -125,7 +155,7 @@ erst vollständig, wenn ZIP und Prüfsumme tatsächlich im Release vorhanden sin
 
 - Auto-Updater, Installer und Signierung
 - Schwebende Werkzeugleiste und umfassendes Einstellungsfenster
-- URL-Automatisierung, eigene Handgrafiken und Durchklickmodus
+- URL-Automatisierung, eigene Handgrafiken und Durchklickmodus mit aktivem Zeiger (passive Anmerkungen sind klickdurchlässig)
 - Die Hand neigt sich dynamisch mit sanft nachgeführtem Griffpunkt; die Fingerspitze
   bleibt am Cursor. Eine separate Verlängerung des Arm-/Stabsegments wie unter macOS
   ist noch nicht enthalten.

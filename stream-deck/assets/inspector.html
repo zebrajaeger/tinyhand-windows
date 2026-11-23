@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><style>body{font:13px system-ui;color:#eee;background:#2d2d2d;margin:16px}label{display:block;margin:12px 0}select,input{display:block;width:100%;margin-top:5px}p{color:#bbb}</style></head>
+<body><section id="size" hidden><label>Größenaktion<select id="mode"><option value="cycle">Durchschalten</option><option value="fixed">Feste Größe</option></select></label><label>Feste Größe<select id="height"><option value="220">Klein</option><option value="340">Mittel</option><option value="480">Groß</option></select></label></section><section id="color" hidden><label>Zeichenfarbe<input id="rgb" type="color" value="#e14164"></label></section><p id="hint">TinyHand separat starten. Tasten zeigen den tatsächlichen Zustand.</p>
+<script>
+let socket,context,settings={};
+window.connectElgatoStreamDeckSocket=(port,uuid,event,info,actionInfo)=>{
+ context=uuid;const action=JSON.parse(actionInfo);settings=action.payload.settings||{};
+ document.getElementById('size').hidden=!action.action.endsWith('.size');document.getElementById('color').hidden=!action.action.endsWith('.color');
+ document.getElementById('mode').value=settings.mode||'cycle';document.getElementById('height').value=String(settings.height||340);document.getElementById('rgb').value=settings.color||'#e14164';
+ socket=new WebSocket('ws://127.0.0.1:'+port);socket.onopen=()=>socket.send(JSON.stringify({event,uuid}));
+};
+for(const id of ['mode','height','rgb'])document.getElementById(id).onchange=()=>{
+ settings={mode:document.getElementById('mode').value,height:Number(document.getElementById('height').value),color:document.getElementById('rgb').value.toUpperCase()};
+ if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify({event:'setSettings',context,payload:settings}));
+};
+</script></body></html>

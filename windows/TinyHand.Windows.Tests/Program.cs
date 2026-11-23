@@ -22,6 +22,7 @@ internal static class Program
             return AudioRegression.Run();
         try
         {
+            AnnotationRegression.Run(Check);
             string startupKey = @"Software\TinyHand.Tests\" + Guid.NewGuid().ToString("N");
             string startupPath = Path.Combine(Path.GetTempPath(), "TinyHand test folder", "TinyHand.Windows.exe");
             try
@@ -82,6 +83,9 @@ internal static class Program
             dot.Add(new Point());
             Check(dot.Arrowhead(20) == null, "Single-point taps have no arrow");
             var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            AnnotationInputRegression.Run(Check);
+            CaptureRegression.Run(Check);
+            ControlRegression.Run(Check);
             string[] styles = PointerController.AvailableStyles().ToArray();
             Check(styles.Contains("lavender") && styles.Contains("laser") && styles.Length >= 37, "Built-in hand assets and laser are available");
             foreach (string style in styles.Where(s => s != "laser"))
@@ -161,6 +165,27 @@ internal static class Program
                 controller.Move(new Point(200, 150));
                 controller.End(new Point(250, 150), true);
                 Check(controller.Strokes.Count == 1 && controller.Strokes[0].Arrow, "Drawing lifecycle commits an arrow");
+                controller.SetActive(false);
+                Check(!controller.Active && controller.Strokes.Count == 1 && app.Windows.Count > 0, "Pointer-off retains passive annotations");
+                foreach (Window passive in app.Windows)
+                {
+                    int flags = Native.GetWindowLong(new System.Windows.Interop.WindowInteropHelper(passive).Handle, -20);
+                    Check((flags & 0x08000020) == 0x08000020, "Passive overlay enables layered-window mouse passthrough and no activation");
+                }
+                controller.SetActive(true);
+                Check(controller.Strokes.Count == 1, "Reactivation retains annotations");
+                controller.SetAnnotationColor("#0000FF");
+                controller.Begin(new Point(30, 30));
+                controller.SetAnnotationColor("#00FF00");
+                controller.End(new Point(60, 30), false);
+                Check(controller.Strokes[1].Color == "#0000FF", "Color changes do not recolor a pending stroke");
+                controller.Clear();
+                controller.Begin(new Point(100, 100));
+                controller.End(new Point(150, 100), false);
+                controller.Begin(new Point(20, 20));
+                controller.SetActive(false);
+                Check(controller.Current == null && controller.Strokes.Count == 1, "Deactivation discards only unfinished stroke");
+                controller.SetActive(true);
                 Native.SendMessage(controller.MessageHandle, Native.WmHotkey, new IntPtr(2), IntPtr.Zero);
                 Check(controller.Strokes.Count == 0 && controller.Current == null, "Clear removes drawing state");
                 Native.SendMessage(controller.MessageHandle, Native.WmHotkey, new IntPtr(3), IntPtr.Zero);
@@ -168,6 +193,45 @@ internal static class Program
                 controller.SetActive(true);
                 controller.SetActive(false);
                 Check(app.Windows.Count == 0, "Repeated toggle leaves no windows");
+                Check(controller.BeginTextPlacement() && controller.TextPhase == "placing", "Text placement can start while passive");
+                Check(!controller.BeginTextPlacement(), "Repeated text placement reports busy");
+                Native.SendMessage(controller.MessageHandle, Native.WmHotkey, new IntPtr(3), IntPtr.Zero);
+                Check(controller.TextPhase == "idle" && !controller.Active && app.Windows.Count == 0, "Esc cancels placement and restores passive mode");
+                controller.BeginTextPlacement();
+                controller.SetActive(false);
+                Check(controller.TextPhase == "idle" && !controller.Active, "Explicit pointer-off cancels text even when already off");
+                controller.SetAnnotationColor("#123456");
+                Check(Settings.Load(settingsPath).AnnotationColor == "#123456", "Selected annotation color round trips atomically");
+                controller.BeginTextPlacement();
+                controller.PlaceText(new Point(120, 120));
+                Check(controller.TextPhase == "editing", "Position click starts focused editing");
+                controller.SetAnnotationColor("#654321");
+                controller.FinishText("Résumé 😀");
+                Check(controller.Annotations.Count == 1 && controller.Annotations[0] is TextAnnotation { Color: "#123456", Text: "Résumé 😀" }, "Text captures placement-time color and Unicode content");
+                Check(!controller.Active && controller.TextPhase == "idle", "Text commit restores passive mode");
+                controller.Clear();
+                Check(app.Windows.Count == 0, "Clearing passive text removes unused overlays");
+                controller.BeginTextPlacement();
+                controller.PlaceText(new Point(120, 120));
+                controller.FinishText("   ");
+                Check(controller.Annotations.Count == 0 && app.Windows.Count == 0, "Whitespace text creates no history or passive overlay");
+                controller.SetActive(true);
+                controller.Begin(new Point(20, 20));
+                controller.End(new Point(50, 20), false);
+                Native.SendMessage(controller.MessageHandle, Native.WmHotkey, new IntPtr(3), IntPtr.Zero);
+                Check(!controller.Active && controller.Annotations.Count == 1, "Esc retains committed document in passive mode");
+                typeof(PointerController).GetMethod("DisplayChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                    .Invoke(controller, new object?[] { null, EventArgs.Empty });
+                var frame = new System.Windows.Threading.DispatcherFrame();
+                System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                    new Action(() => frame.Continue = false));
+                System.Windows.Threading.Dispatcher.PushFrame(frame);
+                Check(controller.Annotations.Count == 0 && !controller.Active && app.Windows.Count == 0, "Passive topology change discards document and unused overlays");
+                controller.SetActive(true);
+                controller.BeginTextPlacement();
+                controller.FinishText(null);
+                Check(controller.Active && controller.TextPhase == "idle", "Text cancellation restores active mode");
+                controller.SetActive(false);
                 controller.SelectStyle("laser");
                 Check(controller.TrayIconStyle == "lavender", "Laser uses a hand app icon rather than a default system icon");
                 controller.SetPointerHeight(480);

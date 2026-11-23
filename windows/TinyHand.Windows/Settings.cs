@@ -11,6 +11,7 @@ internal sealed class Settings
     public int PointerHeight { get; set; } = 340;
     public bool SoundEnabled { get; set; } = false;
     public string Sound { get; set; } = "thock";
+    public string AnnotationColor { get; set; } = global::TinyHand.Windows.AnnotationColor.Default;
 
     internal static Settings Load(string path)
     {
@@ -28,6 +29,7 @@ internal sealed class Settings
 
     internal void Normalize()
     {
+        AnnotationColor = global::TinyHand.Windows.AnnotationColor.Normalize(AnnotationColor);
         if (!PointerController.AvailableStyles().Contains(Style)) Style = "lavender";
         PointerHeight = Math.Clamp(PointerHeight, 160, 640);
         if (!TapSound.Names.Contains(Sound)) Sound = "thock";

@@ -31,6 +31,7 @@ internal static class Program
         }
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         using var controller = new PointerController();
+        using var control = new LocalControlHost(controller, app.Dispatcher);
         app.Run();
         return 0;
     }

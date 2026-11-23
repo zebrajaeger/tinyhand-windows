@@ -33,7 +33,7 @@ The application is **unsigned**, so Windows SmartScreen may show a warning.
 
 After launch, look for the hand icon in the system tray, possibly under the hidden
 icons. The pointer starts **off**. The tray icon follows your selected hand style;
-in laser mode it shows the lavender hand. The EXE uses the cookie hand as its icon.
+in laser mode it shows the lavender hand. The EXE uses the tilted cactus README logo as its icon.
 
 ## Use
 
@@ -45,12 +45,36 @@ in laser mode it shows the lavender hand. The EXE uses the cookie hand as its ic
 | Hold the left mouse button and drag | Draw on the screen |
 | Hold **Shift when releasing** the left mouse button | Add an arrowhead |
 | **Ctrl+Alt+X** | Clear the drawing |
-| **Esc** | Clear the drawing and turn the pointer off |
+| **Esc** | Turn the pointer off without deleting annotations; cancel a pending text |
 
 **While the pointer is on, the overlay blocks clicks and scrolling in applications
 underneath.** Turn it off with **Esc** or **Ctrl+Alt+H** before using other apps or
 opening the tray menu. Ordinary keyboard input is not blocked and can still reach
 the previously focused application.
+
+## Annotations
+
+Turning the pointer off keeps completed lines and text visible and click-through.
+Normal clicks and scrolling reach applications underneath. **Ctrl+Alt+X** or
+**Alles löschen** removes all annotations. Quitting or changing monitor layout
+also discards them; annotation content is not saved.
+
+Choose **Zeichenfarbe** in the tray for new elements; existing ones keep their
+color. **Text platzieren** waits for a position click, then opens a focused editor.
+Enter commits; Esc or switching applications cancels. Only this explicit editor
+consumes typing. Text is single-line (up to 500 Unicode scalar values), uses a
+fixed font/size and cannot be moved or edited after commit. Clear and re-enter to
+correct it.
+
+**Screenshot in Zwischenablage** copies the full monitor currently under the mouse
+to the clipboard, including completed annotations but without TinyHand's hand,
+laser or tap animation. Paste into an image-capable application. No file is saved
+automatically. Finish or cancel pending text/drawing first. Protected windows,
+secure desktops and some fullscreen content may be blank or unavailable.
+An optional [Stream Deck plugin](stream-deck/README.md) provides seven actions with
+actual state feedback. It is built/installed separately and requires Stream Deck
+7.1+ on Windows. Local package validation is automated; physical hardware acceptance
+is still pending. The app remains usable without the plugin.
 
 ## Features
 
@@ -81,7 +105,7 @@ This Windows port does not yet include all features of the original macOS app:
 
 - No installer, code signing or auto-updater.
 - No floating toolbar, full settings window, custom hands or URL automation.
-- No click-through mode or separately extended arm/stick segment.
+- No click-through pointing mode (passive annotations are click-through) or separately extended arm/stick segment.
 - Monitor-layout changes clear the current drawing. Test mixed-DPI setups before
   an important presentation.
 - Secure desktops such as UAC prompts are not covered; exclusive fullscreen and

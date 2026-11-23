@@ -36,7 +36,7 @@ Die Anwendung ist **nicht signiert**; Windows SmartScreen kann eine Warnung anze
 Nach dem Start findest du das Handsymbol im Infobereich der Taskleiste, eventuell
 unter den ausgeblendeten Symbolen. Der Zeiger ist zunächst **ausgeschaltet**.
 Das Tray-Symbol zeigt den gewählten Handstil; im Laser-Modus erscheint die
-lavender-Hand. Die EXE verwendet die Cookie-Hand als Symbol.
+lavender-Hand. Die EXE verwendet das schräge Kaktus-Logo aus der README als Symbol.
 
 ## Bedienung
 
@@ -48,12 +48,35 @@ lavender-Hand. Die EXE verwendet die Cookie-Hand als Symbol.
 | Linke Maustaste halten und ziehen | Auf dem Bildschirm zeichnen |
 | **Umschalt beim Loslassen** der linken Maustaste halten | Pfeilspitze hinzufügen |
 | **Strg+Alt+X** | Zeichnung löschen |
-| **Esc** | Zeichnung löschen und Zeiger ausschalten |
+| **Esc** | Zeiger ohne Löschen ausschalten; ausstehende Texteingabe abbrechen |
 
 **Bei aktivem Zeiger blockiert das Overlay Mausklicks und Scrollen in den darunter
 liegenden Anwendungen.** Schalte es mit **Esc** oder **Strg+Alt+H** aus, bevor du
 andere Apps oder das Tray-Menü bedienst. Normale Tastatureingaben werden nicht
 blockiert und können weiterhin die zuvor aktive Anwendung erreichen.
+
+## Anmerkungen
+
+Beim Ausschalten bleiben fertige Linien und Texte sichtbar und klickdurchlässig.
+Klicks und Scrollen erreichen wieder die darunterliegenden Anwendungen.
+**Strg+Alt+X** oder **Alles löschen** entfernt sämtliche Anmerkungen. Beenden und
+Änderungen der Monitoranordnung verwerfen sie ebenfalls; Inhalte werden nicht gespeichert.
+
+**Zeichenfarbe** im Tray gilt für neue Elemente; vorhandene behalten ihre Farbe.
+**Text platzieren** wartet auf einen Positionsklick und öffnet einen fokussierten
+Editor. Enter bestätigt; Esc oder ein Anwendungswechsel bricht ab. Nur dieser
+explizite Editor nimmt Texteingaben entgegen. Text ist einzeilig (maximal 500
+Unicode-Skalarwerte), hat feste Schrift/Größe und ist nach Bestätigung nicht
+verschiebbar oder bearbeitbar. Zum Korrigieren löschen und neu eingeben.
+**Screenshot in Zwischenablage** kopiert den vollständigen Monitor unter dem
+Mauszeiger mit fertigen Anmerkungen, aber ohne Hand, Laser oder Tippanimation.
+Danach in ein bildfähiges Programm einfügen. Es wird keine Datei automatisch
+gespeichert. Ausstehende Zeichnungen/Texte zuvor bestätigen oder abbrechen.
+Geschützte Fenster, sichere Desktops und manche Vollbildinhalte können leer oder
+nicht aufnehmbar sein. Das optionale [Stream-Deck-Plugin](stream-deck/README.de.md)
+bietet sieben Aktionen mit echter Zustandsrückmeldung, wird separat gebaut/installiert
+und benötigt Stream Deck 7.1+ unter Windows. Paketprüfung ist automatisiert;
+Hardwareabnahme steht noch aus. TinyHand bleibt ohne Plugin nutzbar.
 
 ## Funktionen
 
@@ -85,7 +108,7 @@ Diese Windows-Portierung enthält noch nicht alle Funktionen der ursprünglichen
 - Kein Installer, keine Codesignierung und kein Auto-Updater.
 - Keine schwebende Werkzeugleiste, kein vollständiges Einstellungsfenster,
   keine eigenen Handgrafiken und keine URL-Automatisierung.
-- Kein Durchklickmodus und kein separat verlängertes Arm-/Stabsegment.
+- Kein Durchklickmodus mit aktivem Zeiger (passive Anmerkungen sind klickdurchlässig) und kein separat verlängertes Arm-/Stabsegment.
 - Änderungen der Monitoranordnung löschen die Zeichnung. Unterschiedliche
   DPI-Skalierungen vor wichtigen Präsentationen testen.
 - Sichere Desktops wie UAC-Abfragen werden nicht überlagert; exklusives Vollbild

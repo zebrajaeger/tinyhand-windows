@@ -7,8 +7,12 @@ namespace TinyHand.Windows;
 // Points are physical desktop pixels, including negative coordinates on secondary displays.
 public sealed class InkStroke
 {
+    public string Color { get; }
+    public InkStroke(string color = "#E14164") => Color = AnnotationColor.Normalize(color);
     public List<Point> Points { get; } = new();
     public bool Arrow { get; set; }
+
+    internal StrokeAnnotation Snapshot() => new(Array.AsReadOnly(Points.ToArray()), Arrow, Color);
 
     public void Add(Point point)
     {

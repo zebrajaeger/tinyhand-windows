@@ -6,6 +6,17 @@ Give Windows presenters configurable Stream Deck buttons for TinyHand with truth
 
 ## ADDED Requirements
 
+### Requirement: Consistent cactus action branding
+All Stream Deck keys and sidebar actions SHALL retain the tilted cactus README artwork with a readable function badge. Key labels and selection markers SHALL convey state without replacing the artwork with a solid green background. The category icon SHALL use the same application artwork, while different actions remain distinguishable.
+
+#### Scenario: Compare sidebar and key
+- **WHEN** a user views a TinyHand sidebar action and its configured key
+- **THEN** they share the cactus background and corresponding function badge
+
+#### Scenario: Toggle sound or pointer state
+- **WHEN** represented state changes
+- **THEN** the cactus background remains visible while labels and selection markers update
+
 ### Requirement: Presentation control actions
 The plugin SHALL provide German key actions for pointer toggle, size, sound toggle, color, free-text placement, screenshot and clear-all using direct local commands, not hotkey simulation. Each press SHALL submit at most one command. Size SHALL support cycle/fixed presets; color SHALL be per-key opaque RGB. Text SHALL start free typing. Clear SHALL work while inactive and preserve activation.
 

@@ -5,6 +5,16 @@ namespace TinyHand.Windows;
 
 internal static class Native
 {
+    [DllImport("user32.dll")]
+    internal static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool SetForegroundWindow(IntPtr window);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool IsWindow(IntPtr window);
     internal const int WmHotkey = 0x0312;
     internal const uint Modifiers = 0x0002 | 0x0001 | 0x4000; // Ctrl + Alt, no repeat
 

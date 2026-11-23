@@ -18,42 +18,50 @@ The application SHALL start with the pointer inactive, including when launched a
 - **THEN** the second instance reports the existing instance and exits
 
 ### Requirement: Explicit pointer controls
-The application SHALL let the user toggle the pointer with Ctrl+Alt+H, a left-click on the tray icon or the tray toggle action. Esc while active SHALL clear drawings and deactivate the pointer. Ctrl+Alt+X and the tray clear action SHALL clear drawings without deactivating an active pointer. Unavailable registered toggle or clear hotkeys SHALL produce a tray warning while leaving tray controls available.
+The application SHALL let the user toggle the pointer with Ctrl+Alt+H, a left-click on the tray icon or the tray toggle action. Esc while active and outside text placement/editing SHALL deactivate the pointer without clearing completed annotations. In text placement/editing, Esc SHALL cancel that pending text and restore the preceding pointer state without deleting completed annotations. Ctrl+Alt+X and the tray clear action SHALL clear annotations without changing pointer activation. Unavailable registered toggle or clear hotkeys SHALL produce a tray warning while leaving tray controls available. Passive annotation display SHALL NOT reserve plain Esc from other applications.
 
 #### Scenario: Toggle on and off
-- **WHEN** the user invokes an available toggle control
-- **THEN** an inactive pointer becomes active or an active pointer becomes inactive
+- **WHEN** an available toggle control is invoked
+- **THEN** pointer activation changes and completed annotations remain
 
 #### Scenario: Exit pointer mode
-- **WHEN** the user presses Esc while the pointer is active
-- **THEN** the drawings are cleared and the overlays are closed
+- **WHEN** Esc is pressed while the pointer is active outside text mode
+- **THEN** the pointer disappears, completed annotations remain and normal desktop mouse interaction resumes
 
 #### Scenario: Clear without exiting
-- **WHEN** the user invokes Ctrl+Alt+X while the pointer is active
-- **THEN** existing drawing strokes are removed and the pointer remains active
+- **WHEN** Ctrl+Alt+X is invoked while the pointer is active
+- **THEN** all annotations are removed and the pointer stays active
 
 #### Scenario: Hotkey conflict
-- **WHEN** registration of the toggle or clear hotkey fails
-- **THEN** a tray warning informs the user and tray controls remain available
+- **WHEN** toggle or clear hotkey registration fails
+- **THEN** a tray warning is shown and tray controls remain available
+
+#### Scenario: Escape in another application
+- **WHEN** annotations are displayed passively and the user presses Esc in another application
+- **THEN** TinyHand does not consume that key
 
 ### Requirement: Active input interception
-Active pointer overlays SHALL consume mouse clicks and scrolling over the covered desktop rather than forwarding them to underlying applications. TinyHand SHALL NOT intercept ordinary typing; it may continue reaching the previously focused application. Deactivation SHALL remove the overlays so normal mouse interaction can resume.
+Active pointer overlays SHALL consume covered desktop clicks and scrolling instead of forwarding them to underlying applications. Outside explicit text placement/editing, TinyHand SHALL NOT intercept ordinary typing. Passive annotation overlays SHALL pass mouse clicks and scrolling to underlying applications, SHALL NOT take keyboard focus and SHALL show the normal system cursor rather than the TinyHand pointer. During explicit text placement/editing the placement click and editor typing SHALL NOT reach the previously focused application. Leaving that mode SHALL restore normal input routing.
 
 #### Scenario: Interact over an application
-- **WHEN** the user clicks or scrolls over a covered application while the pointer is active
+- **WHEN** the user clicks or scrolls while pointer mode is active
 - **THEN** the underlying application does not receive those mouse interactions
 
 #### Scenario: Type while pointing
-- **WHEN** the user types ordinary text while the pointer is active
-- **THEN** TinyHand does not consume that text as pointer input
+- **WHEN** ordinary text is typed in pointer mode outside text placement/editing
+- **THEN** TinyHand does not consume that typing
 
 #### Scenario: Resume desktop use
-- **WHEN** the user deactivates the pointer
-- **THEN** the overlay no longer blocks desktop mouse interaction
+- **WHEN** pointer mode is disabled with annotations retained
+- **THEN** clicks and scrolling reach underlying applications through those annotations without focus being stolen
+
+#### Scenario: Explicit text entry
+- **WHEN** a text-placement click is followed by typing in the TinyHand editor
+- **THEN** neither the placement click nor that editor input changes the previously focused application's content
 
 ### Requirement: German tray controls
-The tray menu SHALL expose hand or laser selection, pointer size, sound enablement and selection, drawing clear, per-user Windows startup and application exit, with German control labels.
+The German tray menu SHALL expose existing pointer, size, sound, startup and exit controls together with annotation color, free-text placement and an explicit clear-all-annotations action. Color and text entry points SHALL be available without a Stream Deck.
 
 #### Scenario: Open the tray menu
-- **WHEN** the user right-clicks the tray icon after deactivating the pointer
-- **THEN** the German menu offers the supported pointer, drawing, sound, startup and exit controls
+- **WHEN** the tray menu is opened with pointer mode off
+- **THEN** it offers the supported controls including color, text placement and clearing all annotations

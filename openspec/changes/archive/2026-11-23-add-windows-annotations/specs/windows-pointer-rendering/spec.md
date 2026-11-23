@@ -2,6 +2,21 @@
 
 ## MODIFIED Requirements
 
+### Requirement: Distinct tray and executable imagery
+The tray icon SHALL show the selected hand cropped at the wrist and update on selection; laser SHALL use lavender for the tray. The executable SHALL use the tilted cactus README artwork as its fixed icon, independently of tray style. The Stream Deck category and pointer-action icons SHALL use the same tilted cactus artwork without changing dynamic on-screen hand behavior.
+
+#### Scenario: Change hand style
+- **WHEN** another hand style is selected
+- **THEN** the tray reflects that hand while the fixed application and Stream Deck branding remains the tilted cactus
+
+#### Scenario: Select laser mode
+- **WHEN** laser mode is selected
+- **THEN** the tray uses lavender, the screen shows the laser and the executable retains the cactus icon
+
+#### Scenario: Compare presentation branding
+- **WHEN** the user views the README, Windows app icon and Stream Deck category or pointer action
+- **THEN** they show the same tilted cactus artwork without changing on-screen pose tracking
+
 ### Requirement: Per-monitor desktop alignment
 The application SHALL provide per-monitor overlays while pointer mode is active or completed annotations require passive display. Pointer, stroke and text positions SHALL align with physical desktop locations including negative coordinates and mixed DPI through monitor-local rendering conversion. Passive display SHALL omit the pointer and tap animation. A display-layout change in active or passive mode SHALL cancel pending input, clear annotations and rebuild or remove overlays for the new layout while preserving pointer activation.
 

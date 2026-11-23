@@ -1,0 +1,17 @@
+{
+  "name": "tinyhand-stream-deck",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc && node scripts/build.mjs",
+    "test": "npm run build && node --test build/tests/*.test.js",
+    "validate": "streamdeck validate out/io.github.zebrajaeger.tinyhand.sdPlugin",
+    "package": "npm run build && npm run validate && streamdeck pack out/io.github.zebrajaeger.tinyhand.sdPlugin --output out --force"
+  },
+  "dependencies": { "@elgato/streamdeck": "3.0.6" },
+  "overrides": { "@elgato/utils": { "zod": "4.6.7" } },
+  "devDependencies": { "@elgato/cli": "1.10.5", "@types/node": "24.10.1", "typescript": "5.9.3", "esbuild": "0.27.0" }
+}
