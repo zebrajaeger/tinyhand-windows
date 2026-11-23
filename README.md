@@ -57,6 +57,8 @@ the previously focused application.
 - Screen drawing, arrows and an animated tap indicator.
 - Three pointer sizes and six selectable tap sounds with previews.
 - Saved hand, size and sound preferences. Tap sounds are off by default.
+- Optional **Mit Windows starten** (start with Windows) in the tray menu, for the
+  current user without administrator rights. The pointer still starts off.
 - An overlay on each monitor.
 - A silent audio keep-alive while the pointer and tap sounds are enabled, to avoid
   losing short sounds when a headset wakes up between clicks.
@@ -65,11 +67,17 @@ Settings are stored in `%USERPROFILE%\.config\TinyHand\settings.json`.
 Audio diagnostics are stored alongside them in `audio.log`.
 The pointer always starts off, even when preferences are restored.
 
+Autostart registers the current EXE location for your Windows user. Keep the
+portable app in a permanent folder rather than a temporary extraction directory.
+If you move it, disable and re-enable **Mit Windows starten** from its new location.
+Turn the option off before deleting the app. Windows Task Manager can also disable
+startup apps independently of the tray setting.
+
 ## Current limitations
 
 This Windows port does not yet include all features of the original macOS app:
 
-- No installer, code signing, auto-updater or built-in autostart.
+- No installer, code signing or auto-updater.
 - No floating toolbar, full settings window, custom hands or URL automation.
 - No click-through mode or separately extended arm/stick segment.
 - Monitor-layout changes clear the current drawing. Test mixed-DPI setups before

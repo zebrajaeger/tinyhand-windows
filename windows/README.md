@@ -18,6 +18,16 @@ Das Tray-Symbol zeigt die gewählte Hand ohne Stab und aktualisiert sich beim
 Stilwechsel. Im Laser-Modus wird die lavender-Hand als App-Symbol verwendet.
 Die EXE verwendet die Cookie-Hand als festes Anwendungssymbol.
 
+Im Tray-Menü aktiviert **Mit Windows starten** den Start nach der Anmeldung für
+den aktuellen Benutzer, ohne Administratorrechte. Standardmäßig ist die Option
+aus. Sie schreibt den aktuellen, in Anführungszeichen gesetzten EXE-Pfad unter
+`HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run` in den Wert
+`TinyHand.Windows`. Beim Ausschalten wird nur dieser Wert entfernt.
+Der Zeiger bleibt auch beim Autostart zunächst aus. Die portable EXE sollte in
+einem dauerhaften Ordner liegen; nach dem Verschieben die Option aus- und wieder
+einschalten, vor dem Löschen ausschalten. Der Windows-Task-Manager kann Autostart
+zusätzlich unabhängig von diesem Registry-Eintrag deaktivieren.
+
 ## Bedienung
 
 - **Strg+Alt+H** oder Linksklick auf das Tray-Symbol: ein-/ausschalten.
@@ -103,7 +113,7 @@ ersetzt, manuell bearbeitete Release-Notizen bleiben erhalten.
 
 ## Noch nicht enthalten / Grenzen
 
-- Auto-Updater, Installer, Signierung und Autostart
+- Auto-Updater, Installer und Signierung
 - Schwebende Werkzeugleiste und umfassendes Einstellungsfenster
 - URL-Automatisierung, eigene Handgrafiken und Durchklickmodus
 - Die Hand neigt sich dynamisch mit sanft nachgeführtem Griffpunkt; die Fingerspitze

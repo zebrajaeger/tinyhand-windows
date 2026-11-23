@@ -103,6 +103,9 @@ jobs:
           - Left-click and drag: draw; hold Shift when releasing for an arrow.
           - Esc: clear drawings and turn off the overlay.
           - Right-click the tray hand icon: choose a hand, size or tap sound.
+          - Optional **Mit Windows starten** in the tray menu: launch at sign-in for
+            the current user. The pointer starts off. Keep the EXE in a permanent
+            folder; disable and re-enable the option after moving it.
 
           The application is unsigned; Windows SmartScreen may show a warning.
           A SHA-256 checksum is attached alongside the ZIP.

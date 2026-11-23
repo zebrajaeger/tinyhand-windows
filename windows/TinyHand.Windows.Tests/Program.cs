@@ -22,6 +22,30 @@ internal static class Program
             return AudioRegression.Run();
         try
         {
+            string startupKey = @"Software\TinyHand.Tests\" + Guid.NewGuid().ToString("N");
+            string startupPath = Path.Combine(Path.GetTempPath(), "TinyHand test folder", "TinyHand.Windows.exe");
+            try
+            {
+                var startup = new StartupRegistration(startupPath, startupKey);
+                Check(!startup.Enabled, "Autostart defaults to off");
+                Check(startup.SetEnabled(true) && startup.Enabled, "Autostart can be enabled for the current user");
+                using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(startupKey))
+                    Check((string?)key?.GetValue("TinyHand.Windows") == $"\"{startupPath}\"", "Startup executable path is quoted for spaces");
+                Check(new StartupRegistration(startupPath, startupKey).Enabled, "Autostart survives application restart");
+                string movedPath = Path.Combine(Path.GetTempPath(), "TinyHand moved", "TinyHand.Windows.exe");
+                var movedStartup = new StartupRegistration(movedPath, startupKey);
+                Check(movedStartup.SetEnabled(true), "Autostart path can be updated after moving the application");
+                using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(startupKey, true))
+                {
+                    Check((string?)key?.GetValue("TinyHand.Windows") == $"\"{movedPath}\"", "Enabling updates startup to current executable path");
+                    key!.SetValue("OtherApp", "unrelated");
+                }
+                Check(startup.SetEnabled(false) && !startup.Enabled, "Autostart can be disabled");
+                Check(startup.SetEnabled(false), "Disabling autostart twice is safe");
+                using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(startupKey))
+                    Check((string?)key?.GetValue("OtherApp") == "unrelated", "Disabling preserves unrelated registry values");
+            }
+            finally { Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(startupKey, false); }
             var pose = new HandPose();
             var tip = new Point(180, 12);
             var cursor = new Point(500, 400);

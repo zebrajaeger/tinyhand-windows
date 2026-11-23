@@ -96,6 +96,19 @@ internal sealed class PointerController : IDisposable
         }
         menu.Items.Add(sounds);
         menu.Items.Add(new Forms.ToolStripSeparator());
+        var startup = new StartupRegistration(Environment.ProcessPath!);
+        var startupToggle = new Forms.ToolStripMenuItem("Mit Windows starten") { Checked = startup.Enabled };
+        startupToggle.Click += (_, _) =>
+        {
+            bool enabled = !startupToggle.Checked;
+            if (startup.SetEnabled(enabled))
+                startupToggle.Checked = startup.Enabled;
+            else
+                MessageBox.Show("Die Autostart-Einstellung konnte nicht geändert werden.", "TinyHand",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+        };
+        menu.Opening += (_, _) => startupToggle.Checked = startup.Enabled;
+        menu.Items.Add(startupToggle);
         menu.Items.Add("Bedienung", null, (_, _) => MessageBox.Show(
             "Strg+Alt+H: Zeiger ein/aus\nZiehen: zeichnen\nUmschalt beim Loslassen: Pfeil\nStrg+Alt+X: Zeichnung löschen\nEsc: löschen und ausschalten\n\nIm Zeigemodus werden Mausklicks abgefangen.\nZum Bedienen anderer Apps den Zeiger ausschalten.\nRechtsklick auf das Tray-Symbol: Menü.", "TinyHand für Windows"));
         menu.Items.Add("Beenden", null, (_, _) => Application.Current.Shutdown());
